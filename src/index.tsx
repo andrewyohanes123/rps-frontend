@@ -1,13 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { HashRouter } from 'react-router-dom'
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { GlobalModelsProvider } from './contexts/ModelsContext';
+import { UserProvider } from './contexts/UserContext';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <React.Fragment>
+    <HashRouter>
+      <GlobalModelsProvider>
+        <UserProvider>
+          <App />
+        </UserProvider>
+      </GlobalModelsProvider>
+    </HashRouter>
+  </React.Fragment>,
   document.getElementById('root')
 );
 
