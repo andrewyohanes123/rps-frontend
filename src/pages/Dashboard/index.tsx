@@ -44,7 +44,7 @@ const Dashboard: FC = (): ReactElement => {
               </Breadcrumb.Item>
             </Breadcrumb>
           </PageHeader>
-          <Content>
+          <Content style={{ background: 'white' }}>
             <ContentRoutes />
           </Content>
         </Layout>

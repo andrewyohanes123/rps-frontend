@@ -1,8 +1,7 @@
 import { FC, ReactElement } from "react"
 import Layout from "./Layout";
 
-const Semesters: FC = (): ReactElement => {
-  document.title = "Dashboard - Semester";
+const Semesters: FC = (): ReactElement => {  
   return (
     <Layout />
   )
