@@ -27,10 +27,12 @@ export interface QuestionerAttributes extends ModelInstance {
 }
 
 export interface ScheduleAttributes extends ModelInstance {
-	day_name: string;
+	name: string;
+  day_name: string;
 	hour: string;
-	user_id?: number;
-	class_room_id?: number;
+	type: "Praktek" | "Teori";
+  user_id?: number;
+  class_room_id?: number;
 	created_at?: Date;
 	updated_at?: Date;
 }

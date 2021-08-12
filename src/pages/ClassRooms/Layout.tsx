@@ -37,17 +37,20 @@ const Layout: FC = (): ReactElement => {
     ClassRoom.collection({
       offset,
       limit,
-      attributes: ['name'],
+      attributes: ['name', 'semester_id'],
       include: [{
         model: 'Semester',
         attributes: ['name']
-      }]
+      }],
+      where: {
+        semester_id: id
+      }
     }).then(resp => {
       setClasses(resp as ModelCollectionResult<ClassRoomAttributes>);
     }).catch(e => {
       errorCatch(e);
     });
-  }, [page, limit, ClassRoom, errorCatch]);
+  }, [page, limit, ClassRoom, errorCatch, id]);
 
   useEffect(() => {
     getClassRooms();
@@ -87,7 +90,7 @@ const Layout: FC = (): ReactElement => {
             <Typography.Text type="secondary">Semester {item.semester.name}</Typography.Text>
           </List.Item>
         )}
-        pagination={{ current: page, onChange: setPage, pageSize: limit, }}
+        pagination={{ current: page, onChange: setPage, pageSize: limit, total: classes.count }}
       />
     </Container>
   )

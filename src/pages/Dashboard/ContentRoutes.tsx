@@ -6,6 +6,7 @@ import { Container } from 'components/Container';
 
 const Semesters = lazy(() => import('pages/Semesters/Routes'));
 const Schedules = lazy(() => import('pages/Schedules/Routes'));
+const Users = lazy(() => import('pages/Users'));
 
 const ContentRoutes: FC = (): ReactElement => {
   const { path } = useRouteMatch();
@@ -21,6 +22,7 @@ const ContentRoutes: FC = (): ReactElement => {
         </Route>
         <Route path={`${path}/semester`} component={Semesters} />
         <Route path={`${path}/jadwal`} component={Schedules} />
+        <Route path={`${path}/pengguna`} component={Users} />
         <Route path={`${path}/*`} component={FourOFour} />
       </Switch>
     </Suspense>

@@ -91,7 +91,7 @@ const Layout: FC = (): ReactElement => {
         columns={columns}
         bordered
         rowKey={item => `${item.id}`}
-        pagination={{ onChange: setPage, current: page, pageSize: limit }}
+        pagination={{ onChange: setPage, current: page, pageSize: limit, total: semesters.count }}
       />
     </Container>
   )

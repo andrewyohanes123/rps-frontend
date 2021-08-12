@@ -1,5 +1,9 @@
 import { FC, ReactElement } from 'react';
 import Adapter from '@edgarjeremy/sirius.adapter';
+import moment from 'moment';
+import 'moment/locale/id';
+import locale from 'antd/lib/locale/id_ID';
+import { ConfigProvider } from 'antd';
 import { Route, Switch } from 'react-router-dom';
 import { useConnectServer } from 'hooks/useConnectServer';
 import { Login } from 'pages/Login';
@@ -16,6 +20,7 @@ const App: FC = (): ReactElement => {
   const { ready, error } = useConnectServer(connect);
 
   document.title = "RPS"
+  moment.locale('id');
 
   return (
     error ?
@@ -24,11 +29,13 @@ const App: FC = (): ReactElement => {
       </div>
       :
       ready ?
+      <ConfigProvider locale={locale} >
         <Switch>
           <Route path="/" exact component={Login} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="*" component={FourOFour} />
         </Switch>
+      </ConfigProvider>
         :
         <div>
           loading
