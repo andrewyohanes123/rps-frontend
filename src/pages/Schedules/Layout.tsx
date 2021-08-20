@@ -1,30 +1,49 @@
 import { FC, ReactElement, useState, useCallback, useEffect, useMemo } from "react"
 import moment from "moment";
-import { Button, message, Space, Table, Tooltip } from "antd";
+import { Button, message, Popconfirm, Space, Table, Tooltip } from "antd";
 import { Container } from "components/Container"
 import AddSchedules, { scheduleForm } from "./AddSchedules"
 import { ModelCollectionResult, ScheduleAttributes } from "types";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { ColumnsType } from "antd/lib/table";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Link, useRouteMatch } from "react-router-dom";
+import { DeleteOutlined, EditOutlined, FilePdfOutlined, FileSyncOutlined } from "@ant-design/icons";
+import UploadPlan from "./UploadPlan";
+import useAuth from "hooks/useAuth";
 
 const Layout: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
   const [schedules, setSchedules] = useState<ModelCollectionResult<ScheduleAttributes>>({ rows: [], count: 0 });
   const [page, setPage] = useState<number>(1);
+  const [planModal, togglePlanModal] = useState<boolean>(false);
+  const [schedule, setSchedule] = useState<ScheduleAttributes | undefined>(undefined);
   const [limit] = useState<number>(10);
   const { models: { Schedule } } = useModels();
+  const { user } = useAuth();
   const { errorCatch } = useErrorCatcher();
-  const {path} = useRouteMatch();
+
+  const isAdmin: boolean = useMemo<boolean>(() => user.type === 'administrator', [user]);
 
   const getSchedule = useCallback(() => {
     const offset = (page - 1) * limit;
     Schedule.collection({
       offset,
       limit,
-      attributes: ['name', 'day_name', 'hour', 'type'],
+      attributes: ['subject_id', 'day_name', 'hour', 'class_room_id'],
+      include: [{
+        model: 'Subject',
+        attributes: ['name']
+      }, {
+        model: 'ClassRoom',
+        attributes: ['name', 'semester_id'],
+        include: [{
+          model: 'Semester',
+          attributes: ['name']
+        }]
+      }, {
+        model: 'User',
+        attributes: ['name']
+      }]
     }).then(resp => {
       setSchedules(resp as ModelCollectionResult<ScheduleAttributes>);
     }).catch(e => {
@@ -36,11 +55,18 @@ const Layout: FC = (): ReactElement => {
     getSchedule();
   }, [getSchedule]);
 
+  const deleteSchedule = useCallback((schedule: ScheduleAttributes) => {
+    schedule.delete().then(resp => {
+      message.success(`Jadwal mata kuliah ${resp.subject.name} pada hari ${resp.day_name} jam ${moment(resp.hour).format('hh:mm:ss')} telah dihapus`);
+      getSchedule();
+    }).catch(errorCatch)
+  }, [getSchedule, errorCatch]);
+
   const createSchedule = useCallback((val: scheduleForm, cb: () => void) => {
-    Schedule.create({ ...val, hour: moment(val.hour).format('YYYY-MM-DD hh:mm:ss') })
+    Schedule.create({ ...val, hour: moment(val.hour).format('YYYY-MM-DD HH:mm:ss') })
       .then(resp => {
         getSchedule();
-        message.success(`Jadwal mata kuliah ${resp.name}`);
+        message.success(`Jadwal mata kuliah berhasil ditambah`);
         cb();
         console.log(resp);
       }).catch(e => {
@@ -53,39 +79,63 @@ const Layout: FC = (): ReactElement => {
     {
       title: 'Mata Kuliah',
       key: 'name',
-      dataIndex: 'name',
-      render: (name: string, row: ScheduleAttributes) => (<Link to={`${path}/${row.id}`}>{name}</Link>)
+      render: (row: ScheduleAttributes) => (row.subject.name)
+    },
+    {
+      title: 'Kelas',
+      key: 'class',
+      render: (row: ScheduleAttributes) => (`${row.class_room.semester.name} ${row.class_room.name}`)
     },
     {
       title: 'Hari/Jam',
       key: 'schedule',
-      render: (row: ScheduleAttributes) => (`${row.day_name}/${moment(row.hour).format('hh:mm:ss')}`)
+      render: (row: ScheduleAttributes) => (`${row.day_name}/${moment(row.hour).format('HH:mm:ss a')}`)
     },
     {
-      title: 'Jenis Mata Kuliah',
-      key: 'type',
-      dataIndex: 'type'
+      title: 'Dosen',
+      key: 'lecturer',
+      render: (row: ScheduleAttributes) => (row.user === null ? '-' : row.user.name)
     },
     {
-      title: 'Edit | Hapus',
+      title: !isAdmin ? 'RPS dan Laporan' : 'Edit | Hapus',
       key: 'action',
       render: (row: ScheduleAttributes) => (<Space>
-        <Tooltip title={`Edit  ${row.name}?`}>
-          <Button icon={<EditOutlined />} size="small" />
+        <Tooltip title={`${!isAdmin ? 'Lihat' : 'Upload'} RPS ${row.subject.name}`}>
+          <Button type="primary" onClick={() => {
+            togglePlanModal(true);
+            setSchedule(row);
+          }} icon={<FilePdfOutlined />} size="small" />
         </Tooltip>
-        <Tooltip title={`Hapus ${row.name}?`}>
-          <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
-        </Tooltip>
+        {!isAdmin && <Tooltip title={`Upload Laporan RPS`}>
+          <Button icon={<FileSyncOutlined />} size="small" />
+        </Tooltip>}
+        {isAdmin && <>
+          <Tooltip title={`Edit ${row.subject.name}?`}>
+            <Button icon={<EditOutlined />} size="small" />
+          </Tooltip>
+          <Tooltip title={`Hapus ${row.subject.name}?`}>
+            <Popconfirm
+              title={`Apakah Anda yakin ingin menghapus jadwal ${row.subject.name}?`}
+              okText="Hapus"
+              okButtonProps={{ danger: true, type: 'primary' }}
+              cancelText="Batal"
+              placement="topRight"
+              onConfirm={() => deleteSchedule(row)}
+            >
+              <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+            </Popconfirm>
+          </Tooltip>
+        </>}
       </Space>)
     }
-  ]), [path]);
+  ]), [deleteSchedule, isAdmin]);
 
   document.title = "Dashboard - Jadwal";
 
   return (
     <Container>
-      <AddSchedules visible={modal} onSubmit={createSchedule} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />
-      <Table
+      {isAdmin && <AddSchedules visible={modal} onSubmit={createSchedule} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
+      <Table  
         dataSource={schedules.rows}
         rowKey={item => `${item.id}`}
         columns={columns}
@@ -93,6 +143,10 @@ const Layout: FC = (): ReactElement => {
         pagination={{ current: page, onChange: setPage, pageSize: limit, total: schedules.count }}
         style={{ marginTop: 12 }}
       />
+      <UploadPlan visible={planModal} schedule={schedule} onCancel={() => {
+        togglePlanModal(false);
+        setSchedule(undefined);
+      }} onOpen={() => console.log('object')} />
     </Container>
   )
 }

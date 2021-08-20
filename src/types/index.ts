@@ -27,12 +27,11 @@ export interface QuestionerAttributes extends ModelInstance {
 }
 
 export interface ScheduleAttributes extends ModelInstance {
-	name: string;
   day_name: string;
 	hour: string;
-	type: "Praktek" | "Teori";
-  user_id?: number;
-  class_room_id?: number;
+	user_id?: number;
+	class_room_id?: number;
+	subject_id?: number;
 	created_at?: Date;
 	updated_at?: Date;
 }
@@ -45,6 +44,7 @@ export interface SettingAttributes extends ModelInstance {
 
 export interface SubjectAttributes extends ModelInstance {
 	name: string;
+	type: "Teori" | "Praktek";
 	created_at?: Date;
 	updated_at?: Date;
 }

@@ -39,7 +39,7 @@ export const Login: FC = (): ReactElement => {
     :
     <div style={{ maxWidth: 615, margin: 'auto', padding: 15, height: '100%' }}>
       <Typography.Title level={4}>Login</Typography.Title>
-      <Typography.Text type="secondary">Rencana Pembelajaran Studi</Typography.Text>
+      <Typography.Text type="secondary">Rencana Pembelajaran Semester</Typography.Text>
       <Divider />
       <Form onFinish={login} layout="vertical">
         <Item name="username" required={true} rules={[{ required: true, message: "Masukkan username" }]} label="Username">
