@@ -7,11 +7,12 @@ interface props {
   onCancel: () => void;
   onOpen: () => void;
   onSubmit: ({ name }: { name: string }, cb: () => void) => void;
+  semester: string;
 }
 
 const { useForm, Item } = Form;
 
-const AddClassRoom: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactElement => {
+const AddClassRoom: FC<props> = ({ visible, onCancel, onOpen, onSubmit, semester }): ReactElement => {
   const [loading, toggleLoading] = useState<boolean>(false);
   const [form] = useForm();
 
@@ -30,7 +31,7 @@ const AddClassRoom: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): React
       <Modal title="Tambah kelas" visible={visible} onCancel={onCancel} footer={null}>
         <Form onFinish={onFinish} form={form} layout="vertical">
           <Item name="name" label="Kelas" rules={[{ required: true, message: "Masukkan nama kelas" }]}>
-            <Input prefix={loading && <LoadingOutlined spin />} placeholder="Kelas" />
+            <Input prefix={!loading ? semester : <LoadingOutlined spin />} placeholder="Kelas" />
           </Item>
           <Item>
             <Button loading={loading} htmlType="submit">Tambah</Button>

@@ -16,7 +16,7 @@ const UserMenu: FC = (): ReactElement => {
       message.success(`Logout berhasil`);
       setLogout();
     }).catch(errorCatch)
-  }, [errorCatch, auth]);
+  }, [errorCatch, auth, setLogout]);
 
   const clickMenu = useCallback((ev: MenuInfo) => {
     if (ev.key === 'logout') logout();

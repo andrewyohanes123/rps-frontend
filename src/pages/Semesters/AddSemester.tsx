@@ -37,9 +37,9 @@ const AddSemester: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactE
       <Modal confirmLoading={loading} visible={visible} onCancel={onCancel} title="Tambah Semester" footer={null} >
         <Form onFinish={onFinish} form={form} layout="vertical">
           <Item name="name" required rules={[{ required: true, message: 'Masukkan semester' }, {pattern: /^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i, message: 'Masukkan format semester yang valid'}]} label="Semester">
-            <Input disabled={loading} placeholder="Semester" />
+            <Input prefix={'Semester'} disabled={loading} placeholder="Semester" />
           </Item>
-          <Item name="year" required rules={[{ required: true, message: 'Pilih tahun semester' }]}>
+          <Item name="year" label="Tahun Semester" required rules={[{ required: true, message: 'Pilih tahun semester' }]}>
             <YearPicker disabled={loading} placeholder="Pilih tahun semester" />
           </Item>
           <Item>

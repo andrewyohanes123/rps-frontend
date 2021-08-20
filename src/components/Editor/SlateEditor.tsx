@@ -2,9 +2,9 @@ import { BlockOutlined, BoldOutlined, CodeOutlined, ItalicOutlined, NumberOutlin
 import { Button, Space } from "antd";
 import isHotkey from "is-hotkey";
 import { FC, KeyboardEvent, ReactElement, useCallback, useMemo, useState } from "react"
-import { Editor, createEditor, Descendant, Transforms, Element as SlateElement } from "slate"
+import { Editor, createEditor, Descendant, } from "slate"
 import { withHistory } from "slate-history"
-import { Editable, withReact, useSlate, Slate, RenderElementProps, RenderLeafProps } from "slate-react"
+import { Editable, withReact, Slate, RenderElementProps, RenderLeafProps } from "slate-react"
 import EditorElement from "./EditorElement";
 import EditorLeaf from "./EditorLeaf";
 
@@ -38,7 +38,7 @@ const SlateEditor: FC = (): ReactElement => {
     } else {
       Editor.addMark(editor, mark, true);
     }
-  }, [editor]);
+  }, [editor, isMarkActive]);
 
   const onKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     for (const hotkey in HOTKEYS) {
@@ -49,7 +49,7 @@ const SlateEditor: FC = (): ReactElement => {
         toggleMark(mark);
       }
     }
-  }, []);
+  }, [toggleMark]);
 
   return (
     <Slate editor={editor} value={value} onChange={setValue}>
@@ -66,7 +66,7 @@ const SlateEditor: FC = (): ReactElement => {
         renderLeaf={renderLeaf}
         placeholder="Masukkan deskripsi"
         onKeyDown={onKeyDown}
-        style={{height: 400}}
+        style={{ height: 400 }}
       >
       </Editable>
     </Slate>

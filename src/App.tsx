@@ -15,7 +15,7 @@ import Dashboard from 'pages/Dashboard';
 const { REACT_APP_IP_ADDRESS, REACT_APP_PORT }: NodeJS.ProcessEnv = process.env;
 
 const connect = new Adapter(`${REACT_APP_IP_ADDRESS}`, parseInt(`${REACT_APP_PORT}`), localStorage);
-
+export const baseUrl: string = `${REACT_APP_IP_ADDRESS}:${REACT_APP_PORT}`;
 const App: FC = (): ReactElement => {
   const { ready, error } = useConnectServer(connect);
 

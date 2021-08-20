@@ -6,11 +6,10 @@ import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 
 export type scheduleForm = {
-  subject_id: number;
-
+  subject_id?: number;
   day_name: string;
   hour: moment.Moment;
-  type: "Praktek" | "Teori";
+  class_room_id?: number;
 }
 
 interface props extends addDataModal {
@@ -43,7 +42,11 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
 
   const getSubjects = useCallback(() => {
     Subject.collection({
-      attributes: ['name', 'type'],
+      attributes: ['name', 'type', 'semester_id'],
+      include: [{
+        model: 'Semester',
+        attributes: ['name']
+      }]
     }).then(resp => {
       setSubjects(resp.rows as SubjectAttributes[]);
     }).catch(e => {
@@ -55,8 +58,8 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
     ClassRoom.collection({
       attributes: ['name', 'semester_id'],
       include: [
-        { model: 'Semester', attributes: ['name'] }
-      ]
+        { model: 'Semester', attributes: ['name'] },
+      ],
     }).then(resp => {
       setClassRooms(resp.rows as ClassRoomAttributes[]);
     }).catch(errorCatch);
@@ -66,7 +69,7 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
     User.collection({
       attributes: ['name'],
       where: {
-        type: 'lecturer',        
+        type: 'lecturer',
       }
     }).then(resp => {
       setUsers(resp.rows as UserAttributes[]);
@@ -83,7 +86,7 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
     <>
       <Button onClick={onOpen}>Tambah Jadwal</Button>
       <Modal visible={visible} onCancel={onCancel} title="Tambah Jadwal" footer={null}>
-        <Form onFinish={loading ? undefined : onFinish} layout="vertical" form={form}>          
+        <Form onFinish={loading ? undefined : onFinish} layout="vertical" form={form}>
           <Item name="user_id" label="Dosen" rules={[{ required: true, message: 'Pilih dosen' }]} >
             <Select showSearch allowClear optionFilterProp="children" loading={loading} placeholder="Pilih dosen">
               {
@@ -97,7 +100,7 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
             <Select loading={loading} placeholder="Pilih mata kuliah">
               {
                 subjects.map(subject => (
-                  <Select.Option key={`${subject.name} ${subject.id}`} value={subject.id}>{subject.type}&nbsp;{subject.name}</Select.Option>
+                  <Select.Option key={`${subject.name} ${subject.id}`} value={subject.id}>{subject.type}&nbsp;{subject.name} - Semester {subject.semester.name}</Select.Option>
                 ))
               }
             </Select>

@@ -4,8 +4,9 @@ import { useParams } from "react-router-dom";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { ClassRoomAttributes, ModelCollectionResult, SemesterAttributes } from "types";
 import { Container } from "components/Container";
-import { List, Typography } from "antd";
+import { Button, List, Space, Tooltip, Typography } from "antd";
 import AddClassRoom from "./AddClassRoom";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 
 const Layout: FC = (): ReactElement => {
   const [classes, setClasses] = useState<ModelCollectionResult<ClassRoomAttributes>>({ rows: [], count: 0 });
@@ -74,20 +75,33 @@ const Layout: FC = (): ReactElement => {
     <Container>
       <Typography.Title level={4}>Semester {semester?.name}</Typography.Title>
       <AddClassRoom
+        semester={semester?.name ?? ''}
         onCancel={() => toggleModal(false)}
         visible={modal}
         onOpen={() => toggleModal(true)}
         onSubmit={createClassRoom}
       />
       <List
+        bordered
+        style={{ marginTop: 8 }}
         dataSource={classes.rows}
         rowKey={classroom => classroom.id.toString()}
         renderItem={item => (
           <List.Item>
-            <Typography.Text>
-              {item.name}
-            </Typography.Text>
-            <Typography.Text type="secondary">Semester {item.semester.name}</Typography.Text>
+            <span>
+              <Typography.Text type="secondary">{item.semester.name}&nbsp;</Typography.Text>
+              <Typography.Text>
+                {item.name}
+              </Typography.Text>
+            </span>
+            <Space>
+              <Tooltip title={`Edit ${item.name}`}>
+                <Button size="small" icon={<EditOutlined />} />
+              </Tooltip>
+              <Tooltip placement="topRight" title={`Hapus ${item.name}?`}>
+                <Button size="small" danger type="primary" icon={<DeleteOutlined />} />
+              </Tooltip>
+            </Space>
           </List.Item>
         )}
         pagination={{ current: page, onChange: setPage, pageSize: limit, total: classes.count }}
