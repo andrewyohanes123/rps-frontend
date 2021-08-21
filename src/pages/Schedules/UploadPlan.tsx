@@ -8,6 +8,7 @@ import { addDataModal, PlanAttributes, ScheduleAttributes } from "types"
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { baseUrl } from "App";
 import useAuth from "hooks/useAuth";
+import PlanCard from "./PlanCard";
 
 export interface props extends addDataModal {
   schedule?: ScheduleAttributes;
@@ -30,7 +31,11 @@ const UploadPlan: FC<props> = ({ visible, onCancel, schedule }): ReactElement =>
       attributes: ['file'],
       where: {
         schedule_id: schedule?.id
-      }
+      },
+      include: [{
+        model: 'User',
+        attributes: ['name']
+      }]
     }).then(resp => {
       setPlans(resp.rows as PlanAttributes[]);
     }).catch(e => {
@@ -83,8 +88,8 @@ const UploadPlan: FC<props> = ({ visible, onCancel, schedule }): ReactElement =>
   }, [files, xRefreshToken, xAccessToken, schedule, user]);
 
   return (
-    <Modal visible={visible} footer={null} title="Upload RPS" onCancel={onCancel}>
-      <Upload
+    <Modal style={{ top: 15 }} width={1000} visible={visible} footer={null} title="Upload RPS" onCancel={onCancel}>
+      {plans.length === 0 && <Upload
         accept="application/pdf"
         multiple={false}
         maxCount={1}
@@ -93,14 +98,14 @@ const UploadPlan: FC<props> = ({ visible, onCancel, schedule }): ReactElement =>
         onRemove={() => setFiles([])}
       >
         <Button loading={uploadProgress > 0} icon={<UploadOutlined />}>Pilih File RPS</Button>
-      </Upload>
+      </Upload>}
       {files.length > 0 && <Button loading={uploadProgress > 0} onClick={uploadFile} type="primary">Upload RPS</Button>}
       {uploadProgress > 0 && <Progress percent={uploadProgress} status="active" />}
       <List
         dataSource={plans}
         rowKey={item => `${item.id}`}
         renderItem={item => (
-          <List.Item>{item.file}</List.Item>
+          <PlanCard plan={item} />
         )}
       />
     </Modal>

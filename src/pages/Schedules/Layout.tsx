@@ -10,12 +10,14 @@ import { ColumnsType } from "antd/lib/table";
 import { DeleteOutlined, EditOutlined, FilePdfOutlined, FileSyncOutlined } from "@ant-design/icons";
 import UploadPlan from "./UploadPlan";
 import useAuth from "hooks/useAuth";
+import ReportModal from "./ReportModal";
 
 const Layout: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
   const [schedules, setSchedules] = useState<ModelCollectionResult<ScheduleAttributes>>({ rows: [], count: 0 });
   const [page, setPage] = useState<number>(1);
   const [planModal, togglePlanModal] = useState<boolean>(false);
+  const [reportModal, toggleReportModal] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<ScheduleAttributes | undefined>(undefined);
   const [limit] = useState<number>(10);
   const { models: { Schedule } } = useModels();
@@ -23,6 +25,7 @@ const Layout: FC = (): ReactElement => {
   const { errorCatch } = useErrorCatcher();
 
   const isAdmin: boolean = useMemo<boolean>(() => user.type === 'administrator', [user]);
+  const isChief: boolean = useMemo<boolean>(() => user.type === 'chief', [user]);
 
   const getSchedule = useCallback(() => {
     const offset = (page - 1) * limit;
@@ -100,14 +103,14 @@ const Layout: FC = (): ReactElement => {
       title: !isAdmin ? 'RPS dan Laporan' : 'Edit | Hapus',
       key: 'action',
       render: (row: ScheduleAttributes) => (<Space>
-        <Tooltip title={`${!isAdmin ? 'Lihat' : 'Upload'} RPS ${row.subject.name}`}>
+        <Tooltip title={`${!isAdmin ? 'Lihat' : !isChief ? 'Lihat' : 'Upload'} RPS ${row.subject.name}`}>
           <Button type="primary" onClick={() => {
             togglePlanModal(true);
             setSchedule(row);
           }} icon={<FilePdfOutlined />} size="small" />
         </Tooltip>
-        {!isAdmin && <Tooltip title={`Upload Laporan RPS`}>
-          <Button icon={<FileSyncOutlined />} size="small" />
+        {!isAdmin && <Tooltip title={`${isChief ? 'Lihat' : 'Upload'} Laporan RPS`}>
+          <Button onClick={() => toggleReportModal(true)} icon={<FileSyncOutlined />} size="small" />
         </Tooltip>}
         {isAdmin && <>
           <Tooltip title={`Edit ${row.subject.name}?`}>
@@ -128,14 +131,14 @@ const Layout: FC = (): ReactElement => {
         </>}
       </Space>)
     }
-  ]), [deleteSchedule, isAdmin]);
+  ]), [deleteSchedule, isAdmin, isChief]);
 
   document.title = "Dashboard - Jadwal";
 
   return (
     <Container>
       {isAdmin && <AddSchedules visible={modal} onSubmit={createSchedule} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
-      <Table  
+      <Table
         dataSource={schedules.rows}
         rowKey={item => `${item.id}`}
         columns={columns}
@@ -147,6 +150,7 @@ const Layout: FC = (): ReactElement => {
         togglePlanModal(false);
         setSchedule(undefined);
       }} onOpen={() => console.log('object')} />
+      <ReportModal visible={reportModal} onCancel={() => toggleReportModal(false)} />
     </Container>
   )
 }
