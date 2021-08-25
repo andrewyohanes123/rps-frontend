@@ -80,12 +80,13 @@ const UploadPlan: FC<props> = ({ visible, onCancel, schedule }): ReactElement =>
         localStorage.setItem('app_refreshToken', resp.headers['x-refresh-token']);
       }
       setFiles([]);
+      getPlans();
       console.log(resp.headers)
       console.log(resp.data);
     }).catch(e => {
       console.log({ e });
     })
-  }, [files, xRefreshToken, xAccessToken, schedule, user]);
+  }, [files, xRefreshToken, xAccessToken, schedule, user, getPlans]);
 
   return (
     <Modal style={{ top: 15 }} width={1000} visible={visible} footer={null} title="Upload RPS" onCancel={onCancel}>

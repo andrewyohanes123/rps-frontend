@@ -1,15 +1,15 @@
 import { FC, ReactElement, useCallback, useState, useEffect } from "react"
 import { Button, Modal, Select, Form, DatePicker } from "antd"
-import { addDataModal, ClassRoomAttributes, SubjectAttributes, UserAttributes } from "types"
+import { addDataModal, ClassRoomAttributes, SemesterAttributes, SubjectAttributes, UserAttributes } from "types"
 import moment from "moment";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 
 export type scheduleForm = {
   subject_id?: number;
-  day_name: string;
-  hour: moment.Moment;
+  daytime: moment.Moment;
   class_room_id?: number;
+  semester_id?: number;
 }
 
 interface props extends addDataModal {
@@ -18,16 +18,18 @@ interface props extends addDataModal {
 
 const { useForm, Item } = Form;
 
-const dayNames: string[] = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+// const dayNames: string[] = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
 
 const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): ReactElement => {
   const [loading, toggleLoading] = useState<boolean>(false);
   const [subjects, setSubjects] = useState<SubjectAttributes[]>([]);
+  const [semesters, setSemesters] = useState<SemesterAttributes[]>([]);
+  const [semesterId, setSemesterId] = useState<number>(0);
   const [users, setUsers] = useState<UserAttributes[]>([]);
   const [classRooms, setClassRooms] = useState<ClassRoomAttributes[]>([]);
   const [form] = useForm();
   const { errorCatch } = useErrorCatcher();
-  const { models: { Subject, ClassRoom, User } } = useModels();
+  const { models: { Subject, ClassRoom, User, Semester } } = useModels();
 
   const clearForm = useCallback(() => {
     toggleLoading(false);
@@ -40,19 +42,30 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
     onSubmit(val, clearForm);
   }, [onSubmit, clearForm]);
 
+  const getSemesters = useCallback(() => {
+    Semester.collection({
+      attributes: ['name'],
+    }).then(resp => {
+      setSemesters(resp.rows as SemesterAttributes[]);
+    }).catch(errorCatch);
+  }, [Semester, errorCatch]);
+
   const getSubjects = useCallback(() => {
     Subject.collection({
       attributes: ['name', 'type', 'semester_id'],
       include: [{
         model: 'Semester',
         attributes: ['name']
-      }]
+      }],
+      where: {
+        semester_id: semesterId
+      }
     }).then(resp => {
       setSubjects(resp.rows as SubjectAttributes[]);
     }).catch(e => {
       errorCatch(e);
     })
-  }, [errorCatch, Subject]);
+  }, [errorCatch, Subject, semesterId]);
 
   const getClassRooms = useCallback(() => {
     ClassRoom.collection({
@@ -60,10 +73,13 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
       include: [
         { model: 'Semester', attributes: ['name'] },
       ],
+      where: {
+        semester_id: semesterId
+      }
     }).then(resp => {
       setClassRooms(resp.rows as ClassRoomAttributes[]);
     }).catch(errorCatch);
-  }, [errorCatch, ClassRoom]);
+  }, [errorCatch, ClassRoom, semesterId]);
 
   const getUsers = useCallback(() => {
     User.collection({
@@ -80,18 +96,34 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
     getClassRooms();
     getSubjects();
     getUsers();
-  }, [getSubjects, getClassRooms, getUsers]);
+    getSemesters();
+  }, [getSubjects, getClassRooms, getUsers, getSemesters]);
+
+  const onSemesterChange = useCallback((val: any, changedValue: scheduleForm) => {
+    setSemesterId(changedValue.semester_id ?? 0);
+  }, []);
+
+  const disabledDate = useCallback((current: moment.Moment) => ([0, 6].includes(moment(current).day())), []);
 
   return (
     <>
       <Button onClick={onOpen}>Tambah Jadwal</Button>
       <Modal visible={visible} onCancel={onCancel} title="Tambah Jadwal" footer={null}>
-        <Form onFinish={loading ? undefined : onFinish} layout="vertical" form={form}>
+        <Form onValuesChange={onSemesterChange} onFinish={loading ? undefined : onFinish} layout="vertical" form={form}>
           <Item name="user_id" label="Dosen" rules={[{ required: true, message: 'Pilih dosen' }]} >
             <Select showSearch allowClear optionFilterProp="children" loading={loading} placeholder="Pilih dosen">
               {
                 users.map(user => (
                   <Select.Option key={`${user.name} ${user.id}`} value={user.id}>{user.name}</Select.Option>
+                ))
+              }
+            </Select>
+          </Item>
+          <Item name="semester_id" label="Semester" rules={[{ required: true, message: 'Pilih Semester' }]} >
+            <Select loading={loading} placeholder="Pilih Semester">
+              {
+                semesters.map(semester => (
+                  <Select.Option key={`${semester.name} ${semester.id}`} value={semester.id}>Semester {semester.name}</Select.Option>
                 ))
               }
             </Select>
@@ -114,17 +146,8 @@ const AddSchedules: FC<props> = ({ onCancel, onOpen, visible, onSubmit }): React
               }
             </Select>
           </Item>
-          <Item label="Masukkan hari" name="day_name" rules={[{ required: true, message: 'Pilih hari mata kuliah' }]}>
-            <Select loading={loading} placeholder="Pilih hari mata kuliah">
-              {
-                dayNames.map(day => (
-                  <Select.Option value={`${day}`} key={`${day}`}>{day}</Select.Option>
-                ))
-              }
-            </Select>
-          </Item>
-          <Item name="hour" rules={[{ required: true, message: 'Pilih jam mata kuliah' }]} label="Masukkan jam">
-            <DatePicker.TimePicker inputReadOnly placeholder="Pilih jam mata kuliah" />
+          <Item name="daytime" rules={[{ required: true, message: 'Pilih hari dan jam mata kuliah' }]} label="Pilih hari dan jam mata kuliah">
+            <DatePicker disabledDate={disabledDate} format="YYYY-MM-DD HH:mm" showTime={{ format: 'HH:mm' }} inputReadOnly placeholder="Pilih jam mata kuliah" />
           </Item>
           <Item>
             <Button loading={loading} htmlType="submit">Tambah jadwal</Button>

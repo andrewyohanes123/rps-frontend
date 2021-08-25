@@ -32,7 +32,7 @@ const Layout: FC = (): ReactElement => {
     Schedule.collection({
       offset,
       limit,
-      attributes: ['subject_id', 'day_name', 'hour', 'class_room_id'],
+      attributes: ['subject_id', 'daytime', 'class_room_id'],
       include: [{
         model: 'Subject',
         attributes: ['name']
@@ -66,7 +66,7 @@ const Layout: FC = (): ReactElement => {
   }, [getSchedule, errorCatch]);
 
   const createSchedule = useCallback((val: scheduleForm, cb: () => void) => {
-    Schedule.create({ ...val, hour: moment(val.hour).format('YYYY-MM-DD HH:mm:ss') })
+    Schedule.create({ ...val, hour: moment(val.daytime).format('YYYY-MM-DD HH:mm:ss') })
       .then(resp => {
         getSchedule();
         message.success(`Jadwal mata kuliah berhasil ditambah`);
@@ -92,7 +92,7 @@ const Layout: FC = (): ReactElement => {
     {
       title: 'Hari/Jam',
       key: 'schedule',
-      render: (row: ScheduleAttributes) => (`${row.day_name}/${moment(row.hour).format('HH:mm:ss a')}`)
+      render: (row: ScheduleAttributes) => (`${moment(row.daytime).format('dddd, DD MMM YYYY / HH:mm a')}`)
     },
     {
       title: 'Dosen',

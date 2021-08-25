@@ -16,6 +16,8 @@ const Layout: FC = (): ReactElement => {
   const { models: { User } } = useModels();
   const { errorCatch } = useErrorCatcher();
 
+  document.title = "Dashboard - Pengguna"
+
   const getUsers = useCallback(() => {
     User.collection({
       attributes: ['username', 'name', 'type'],

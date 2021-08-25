@@ -10,6 +10,7 @@ const Schedules = lazy(() => import('pages/Schedules/Routes'));
 const Users = lazy(() => import('pages/Users'));
 const UserMainPage = lazy(() => import('pages/UserMainPage'));
 const AdminMainPage = lazy(() => import('pages/AdminMainPage'));
+const Questioner = lazy(() => import('pages/Questioner'));
 
 const ContentRoutes: FC = (): ReactElement => {
   const { path } = useRouteMatch();
@@ -32,6 +33,7 @@ const ContentRoutes: FC = (): ReactElement => {
             <Route path={`${path}/semester`} component={Semesters} />
             <Route path={`${path}/jadwal`} component={Schedules} />
             <Route path={`${path}/pengguna`} component={Users} />
+            <Route path={`${path}/kuesioner`} component={Questioner} />
           </>
         }
         <Route path={`${path}/*`} component={FourOFour} />
