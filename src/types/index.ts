@@ -18,10 +18,25 @@ export interface PlanAttributes extends ModelInstance {
 
 export interface QuestionerAttributes extends ModelInstance {
 	question: string;
-	answer: string;
-	user_id?: number;
-	class_room_id?: number;
-	schedule_id?: number;
+  user_id?: number;
+	created_at?: Date;
+	updated_at?: Date;
+}
+
+export interface QuestionerResponseAttributes extends ModelInstance {
+  answer: string;
+	semester_id?: number;
+	questioner_id?: number;
+	created_at?: Date;
+	updated_at?: Date;
+}
+
+export interface StudentAttributes extends ModelInstance {
+  name: string;
+  nim: string;
+	semester_id?: number;
+  schedule_id?: number;
+  class_room_id?: number;
 	created_at?: Date;
 	updated_at?: Date;
 }
