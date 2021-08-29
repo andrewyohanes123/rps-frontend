@@ -110,7 +110,10 @@ const Layout: FC = (): ReactElement => {
           }} icon={<FilePdfOutlined />} size="small" />
         </Tooltip>
         {!isAdmin && <Tooltip title={`${isChief ? 'Lihat' : 'Upload'} Laporan RPS`}>
-          <Button onClick={() => toggleReportModal(true)} icon={<FileSyncOutlined />} size="small" />
+          <Button onClick={() => {
+            toggleReportModal(true);
+            setSchedule(row);
+          }} icon={<FileSyncOutlined />} size="small" />
         </Tooltip>}
         {isAdmin && <>
           <Tooltip title={`Edit ${row.subject.name}?`}>
@@ -150,7 +153,7 @@ const Layout: FC = (): ReactElement => {
         togglePlanModal(false);
         setSchedule(undefined);
       }} onOpen={() => console.log('object')} />
-      <ReportModal visible={reportModal} onCancel={() => toggleReportModal(false)} />
+      <ReportModal visible={reportModal} schedule={schedule} onCancel={() => toggleReportModal(false)} />
     </Container>
   )
 }

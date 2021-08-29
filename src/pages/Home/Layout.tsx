@@ -4,16 +4,18 @@ import { HomeContainer } from "components/Container"
 import { LogoImage } from "components/LogoImage"
 import Header from "./Header"
 import { FormOutlined, LoginOutlined } from "@ant-design/icons"
+import { useHistory } from "react-router-dom"
 
 const Layout: FC = (): ReactElement => {
+  const { push } = useHistory();
   document.title = "Sistem RPS"
   return (
     <HomeContainer>
       <LogoImage />
       <Header />
-      <Button icon={<LoginOutlined />} type="primary" size="large" block>Login</Button>
+      <Button onClick={() => push('/login')} icon={<LoginOutlined />} type="primary" size="large" block>Login</Button>
       <Divider>atau</Divider>
-      <Button icon={<FormOutlined />} size="large" block>Jawab Kuesioner</Button>
+      <Button onClick={() => push('/kuesioner')} icon={<FormOutlined />} size="large" block>Jawab Kuesioner</Button>
     </HomeContainer>
   )
 }

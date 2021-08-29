@@ -1,11 +1,13 @@
 import { FC, ReactElement, useCallback, useState, useEffect } from "react"
-import { Card, Divider, Form, Input, Select } from "antd"
+import { Button, Card, Divider, Form, Input, message, Select } from "antd"
 import { Container } from "components/Container"
-import { ClassRoomAttributes, QuestionerAttributes, SemesterAttributes, SubjectAttributes } from "types";
+import { ClassRoomAttributes, QuestionerAttributes, ScheduleAttributes, SemesterAttributes } from "types";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { LogoImage } from "components/LogoImage";
 import Questions from "./Questions";
+import moment from "moment";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const { Item, useForm } = Form;
 
@@ -15,16 +17,18 @@ export type questionerResponseType = {
   semester_id?: number;
   class_room_id?: number;
   subject_id?: number;
-} 
+}
 
 const Layout: FC = (): ReactElement => {
   const [semesters, setSemesters] = useState<SemesterAttributes[]>([]);
   const [classRooms, setClassRooms] = useState<ClassRoomAttributes[]>([]);
-  const [subjects, setSubjects] = useState<SubjectAttributes[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleAttributes[]>([]);
   const [questioners, setQuestioners] = useState<QuestionerAttributes[]>([]);
   const [semesterId, setSemesterId] = useState<number>(0);
-  const { models: {Semester, Subject, ClassRoom, Questioner} } = useModels();
-  const {errorCatch} = useErrorCatcher();
+  const [classRoomId, setClassRoomId] = useState<number>(0);
+  const [loading, toggleLoading] = useState<boolean>(false);
+  const { models: { Semester, Schedule, ClassRoom, Questioner, Student } } = useModels();
+  const { errorCatch } = useErrorCatcher();
   const [form] = useForm();
 
   const getSemesters = useCallback(() => {
@@ -49,17 +53,26 @@ const Layout: FC = (): ReactElement => {
       setClassRooms(resp.rows as ClassRoomAttributes[]);
     }).catch(errorCatch);
   }, [ClassRoom, errorCatch, semesterId]);
-  
-  const getSubjects = useCallback(() => {
-    Subject.collection({
-      attributes: ['name', 'semester_id', 'type'],
+
+  const getSchedule = useCallback(() => {
+    Schedule.collection({
+      attributes: ['class_room_id', 'subject_id', 'daytime'],
       where: {
-        semester_id: semesterId
-      }
+        class_room_id: classRoomId,
+        daytime: {
+          $lte: moment().endOf('week').format('YYYY-MM-DD'),
+          $gte: moment().startOf('week').format('YYYY-MM-DD')
+        },
+      },
+      include: [
+        {
+          model: 'Subject', attributes: ['name', 'type']
+        }
+      ]
     }).then(resp => {
-      setSubjects(resp.rows as SubjectAttributes[]);
+      setSchedules(resp.rows as ScheduleAttributes[]);
     }).catch(errorCatch);
-  }, [Subject, errorCatch, semesterId]);
+  }, [Schedule, errorCatch, classRoomId]);
 
   const getQuestioners = useCallback(() => {
     Questioner.collection({
@@ -71,14 +84,25 @@ const Layout: FC = (): ReactElement => {
 
   useEffect(() => {
     getClassRooms();
-    getSubjects();
+    getSchedule();
     getSemesters();
     getQuestioners();
-  }, [getSemesters, getSubjects, getClassRooms, getQuestioners]);
+  }, [getSemesters, getSchedule, getClassRooms, getQuestioners]);
 
   const onValueChange = useCallback((val: any, changeValue: questionerResponseType) => {
     setSemesterId(changeValue.semester_id ?? 0);
+    setClassRoomId(changeValue.class_room_id ?? 0);
   }, []);
+
+  const onFinish = useCallback((val:any) => {
+    toggleLoading(true);
+    Student.create(val).then(resp => {
+      console.log(resp);
+      message.success('Kuesioner berhasil diisi');
+      toggleLoading(false);
+      form.resetFields(['name', 'nim', 'semester_id', 'class_room_id', 'schedule_id', 'questions']);
+    }).catch(errorCatch);
+  }, [form, errorCatch, Student]);
 
   // useEffect(() => {
   //   form.
@@ -88,36 +112,39 @@ const Layout: FC = (): ReactElement => {
     <Container widthLimit={1000} padding={0}>
       <LogoImage />
       <Card>
-        <Form onValuesChange={onValueChange} form={form} layout="vertical">
-          <Item label="Nama Lengkap" name="name" rules={[{required: true, message: 'Masukkan nama lengkap'}]}>
-            <Input placeholder="Nama Lengkap" />
+        <Form onFinish={loading ? undefined : onFinish} onValuesChange={onValueChange} form={form} layout="vertical">
+          <Item label="Nama Lengkap" name="name" rules={[{ required: true, message: 'Masukkan nama lengkap' }]}>
+            <Input prefix={loading && <LoadingOutlined />} placeholder="Nama Lengkap" />
           </Item>
-          <Item label="NIM" name="nim" rules={[{required: true, message: 'Masukkan NIM'}, {len: 8, message: 'Masukkan NIM yang valid'}]}>
-            <Input maxLength={8} placeholder="NIM" />
+          <Item label="NIM" name="nim" rules={[{ required: true, message: 'Masukkan NIM' }, { len: 8, message: 'Masukkan NIM yang valid' }]}>
+            <Input prefix={loading && <LoadingOutlined />} maxLength={8} placeholder="NIM" />
           </Item>
-          <Item label="Semester" name="semester_id" rules={[{required: true, message: 'Pilih semester'}]}>
-            <Select placeholder="Pilih Semester">
+          <Item label="Semester" name="semester_id" rules={[{ required: true, message: 'Pilih semester' }]}>
+            <Select loading={loading} placeholder="Pilih Semester">
               {semesters.map(semester => (
                 <Select.Option key={`${semester.id}`} value={semester.id}>Semester {semester.name}</Select.Option>
               ))}
             </Select>
           </Item>
-          <Item label="Kelas" name="class_room_id" rules={[{required: true, message: 'Pilih kelas'}]}>
-            <Select placeholder="Pilih Kelas">
+          <Item label="Kelas" name="class_room_id" rules={[{ required: true, message: 'Pilih kelas' }]}>
+            <Select loading={loading} placeholder="Pilih Kelas">
               {classRooms.map(classRoom => (
                 <Select.Option key={`${classRoom.id}`} value={classRoom.id}>{classRoom.semester.name}&nbsp;{classRoom.name}</Select.Option>
               ))}
             </Select>
           </Item>
-          <Item label="Mata Kuliah" name="subject_id" rules={[{required: true, message: 'Pilih mata kuliah'}]}>
-            <Select placeholder="Pilih Mata Kuliah">
-              {subjects.map(subject => (
-                <Select.Option key={`${subject.id}`} value={subject.id}>{subject.type}&nbsp;{subject.name}</Select.Option>
+          <Item label="Mata Kuliah" name="schedule_id" rules={[{ required: true, message: 'Pilih mata kuliah' }]}>
+            <Select loading={loading} placeholder="Pilih Mata Kuliah">
+              {schedules.map(schedule => (
+                <Select.Option key={`${schedule.id}`} value={schedule.id}>[{moment(schedule.daytime).format('DD MMM YYYY HH:mm a')}]&nbsp;{schedule.subject.type} {schedule.subject.name}</Select.Option>
               ))}
             </Select>
           </Item>
           <Divider />
           {questioners.length > 0 && <Questions questions={questioners} />}
+          <Item>
+            <Button loading={loading} type="primary" htmlType="submit" block>Masukkan kuesioner</Button>
+          </Item>
         </Form>
       </Card>
     </Container>

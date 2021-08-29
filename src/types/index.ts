@@ -80,6 +80,15 @@ export interface SemesterAttributes extends ModelInstance {
 	updated_at?: Date;
 }
 
+export interface ReportAttributes extends ModelInstance {
+  file: string;
+  description: {[any: string]: any}[];
+  user_id?: number;
+  schedule_id?: number;
+	created_at?: Date;
+	updated_at?: Date;
+}
+
 export interface ModelCollectionResult<T extends ModelInstance> extends ICollectionResult {
   rows: T[],
   count: number;
