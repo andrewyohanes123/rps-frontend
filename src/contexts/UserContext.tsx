@@ -1,4 +1,4 @@
-import React, { useReducer, createContext } from 'react'
+import React, { useReducer, createContext, useCallback } from 'react'
 import AuthProvider from '@edgarjeremy/sirius.adapter/dist/libs/AuthProvider'
 import UserContextReducer from './UserContextReducer';
 import ModelInstance from '@edgarjeremy/sirius.adapter/dist/libs/ModelInstance';
@@ -28,26 +28,26 @@ export const UserContext = createContext<UserContextAttributes>(initialState);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(UserContextReducer, initialState);
 
-  const setAuth = (auth: AuthProvider) => {
+  const setAuth = useCallback((auth: AuthProvider) => {
     dispatch({
       type: "SET_AUTH",
       payload: { auth, login: false, user: null }
     });
-  }
+  }, [])
 
-  const setLogin = (user: ModelInstance) => {
+  const setLogin = useCallback((user: ModelInstance) => {
     dispatch({
       type: "LOGIN",
       payload: {auth: state.auth, login: true, user}
     });
-  }
+  }, [state]);
 
-  const setLogout = () => {
+  const setLogout = useCallback(() => {
     dispatch({
       type: "LOGOUT",
       payload: {auth: state.auth, login: false, user: null}
     });
-  }
+  }, [state]);
 
   return (
     <UserContext.Provider value={{ ...state, setAuth, setLogin, setLogout }}>

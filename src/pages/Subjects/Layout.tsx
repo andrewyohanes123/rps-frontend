@@ -18,10 +18,12 @@ const Layout: FC = (): ReactElement => {
   const { id } = useParams<{ id: string }>();
   const { errorCatch } = useErrorCatcher();
 
+  document.title = "Dashboard - Mata Kuliah"
+
   const getSubjects = useCallback(() => {
     const offset = (page - 1) * limit;
     Subject.collection({
-      attributes: ['name', 'type', 'semester_id'],
+      attributes: ['name', 'practice', 'theory', 'semester_id'],
       where: {
         semester_id: id,
       },
@@ -53,7 +55,9 @@ const Layout: FC = (): ReactElement => {
     {
       title: 'Jenis Mata Kuliah',
       key: 'type',
-      dataIndex: 'type'
+      render: (row: SubjectAttributes) => (
+        `${row.practice && 'Praktek'}${row.theory && ', Teori'}`
+      )
     },
     {
       title: 'Edit | Hapus',
