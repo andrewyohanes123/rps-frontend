@@ -56,7 +56,7 @@ const Layout: FC = (): ReactElement => {
       title: 'Jenis Mata Kuliah',
       key: 'type',
       render: (row: SubjectAttributes) => (
-        `${row.practice && 'Praktek'}${row.theory && ', Teori'}`
+        [...(row.practice ? ['Praktek'] : []), ...(row.theory ? ['Teori'] : [])].join(', ')
       )
     },
     {

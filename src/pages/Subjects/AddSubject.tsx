@@ -1,6 +1,6 @@
 import { FC, ReactElement, useCallback, useState, useEffect } from "react"
 import { LoadingOutlined } from "@ant-design/icons";
-import { Button, Drawer, Form, Input, Switch, Row, Col, Select } from "antd"
+import { Button, Drawer, Form, Input, Switch, Row, Col, Select, InputNumber } from "antd"
 import { addDataModal, UserAttributes } from "types"
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
@@ -13,13 +13,15 @@ export type subjectForm = {
   name: string;
   practice?: boolean;
   theory?: boolean;
+  subject_weight: number;
 }
 
 const initialValues: subjectForm = {
   name: '',
   practice: false,
   theory: true,
-}
+  subject_weight: 0
+};
 
 const { useForm, Item } = Form;
 
@@ -94,6 +96,9 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
                     ))
                   }
                 </Select>
+              </Item>
+              <Item label="Bobot Mata Kuliah" name="subject_weight" rules={[{ required: true, message: 'Masukkan bobot mata kuliah' }]}>
+                <InputNumber min={0} placeholder="Bobot Mata Kuliah" />
               </Item>
               <Item label="Kode Mata Kuliah" name="code" rules={[{ required: true, message: 'Masukkan kode mata kuliah' }]}>
                 <Input prefix={loading && <LoadingOutlined spin />} placeholder="Kode Mata Kuliah" />
