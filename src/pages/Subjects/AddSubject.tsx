@@ -29,12 +29,13 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
   const [form] = useForm();
   const [loading, toggleLoading] = useState<boolean>(false);
   const [users, setUsers] = useState<UserAttributes[]>([]);
+  const [practice, togglePractice] = useState<boolean>(false);
   const { models: { User } } = useModels();
   const { errorCatch } = useErrorCatcher();
 
   const clearForm = useCallback(() => {
     toggleLoading(false);
-    form.resetFields(['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware']);
+    form.resetFields(['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware', 'practice_weight', 'theory_weight']);
     onCancel();
   }, [form, onCancel]);
 
@@ -62,6 +63,10 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
     !visible && clearForm();
   }, [clearForm]);
 
+  const onValuesChange = useCallback((changedValue: any, values: subjectForm) => {
+    togglePractice(values.practice ?? false);
+  }, []);
+
   return (
     <>
       <Button onClick={onOpen}>Tambah Mata Kuliah</Button>
@@ -76,7 +81,7 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
         title='Tambah Mata Kuliah'
         footer={null}
       >
-        <Form initialValues={initialValues} onFinish={onFinish} form={form} layout="vertical">
+        <Form onValuesChange={onValuesChange} initialValues={initialValues} onFinish={onFinish} form={form} layout="vertical">
           <Row gutter={[16, 16]}>
             <Col md={12}>
               <Item label="Pembuat RPS" name="creator_id" rules={[{ required: true, message: 'Pilih pembuat RPS' }]}>
@@ -88,8 +93,8 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
                   }
                 </Select>
               </Item>
-              <Item label="Koodinator RPS" name="coordinator_id" rules={[{ required: true, message: 'Pilih koordinator RPS' }]}>
-                <Select allowClear showSearch placeholder="Koordinator RPS" optionFilterProp="children">
+              <Item label="Koodinator MK" name="coordinator_id" rules={[{ required: false, message: 'Pilih koordinator MK' }]}>
+                <Select allowClear showSearch placeholder="Koordinator MK" optionFilterProp="children">
                   {
                     users.map(user => (
                       <Select.Option value={user.id} key={`${user.id}${user.name}`}>{user.name}</Select.Option>
@@ -97,29 +102,35 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
                   }
                 </Select>
               </Item>
-              <Item label="Bobot Mata Kuliah" name="subject_weight" rules={[{ required: true, message: 'Masukkan bobot mata kuliah' }]}>
-                <InputNumber min={0} placeholder="Bobot Mata Kuliah" />
-              </Item>
               <Item label="Kode Mata Kuliah" name="code" rules={[{ required: true, message: 'Masukkan kode mata kuliah' }]}>
                 <Input prefix={loading && <LoadingOutlined spin />} placeholder="Kode Mata Kuliah" />
               </Item>
               <Item label="Mata Kuliah" name="name" rules={[{ required: true, message: 'Masukkan nama mata kuliah' }]}>
                 <Input prefix={loading && <LoadingOutlined spin />} placeholder="Mata Kuliah" />
               </Item>
-              <Row>
+              <Row gutter={12}>
+                <Col md={12}>
+                  <Item label="Teori" name="theory" rules={[{ required: false, message: 'Pilih ' }]}>
+                    <Switch defaultChecked />
+                  </Item>
+                  <Item label="Bobot Mata Kuliah Teori" name="theory_weight" rules={[{ required: true, message: 'Masukkan bobot mata kuliah' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Bobot Mata Kuliah Teori" />
+                  </Item>
+                </Col>
                 <Col md={12}>
                   <Item label="Praktek" name="practice" rules={[{ required: false, message: 'Pilih ' }]}>
                     <Switch />
                   </Item>
-                </Col>
-                <Col md={12}>
-                  <Item label="Teori" name="theory" rules={[{ required: false, message: 'Pilih ' }]}>
-                    <Switch />
-                  </Item>
+                  {practice && <Item label="Bobot Mata Kuliah Praktek" name="practice_weight" rules={[{ required: true, message: 'Masukkan bobot mata kuliah' }]}>
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="Bobot Mata Kuliah Praktek" />
+                  </Item>}
                 </Col>
               </Row>
             </Col>
             <Col md={12}>
+              <Item name="subject_cluster" rules={[{ required: true, message: 'Masukkan rumpun MK' }]} label="Rumpun MK">
+                <Input.TextArea placeholder="Rumpun Mata Kuliah" rows={3} />
+              </Item>
               <Item name="guide" rules={[{ required: true, message: 'Masukkan pedoman mata kuliah' }]} label="Pedoman">
                 <Input.TextArea placeholder="Pedoman Mata Kuliah" rows={3} />
               </Item>

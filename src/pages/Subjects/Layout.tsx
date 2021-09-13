@@ -1,6 +1,6 @@
 import { FC, ReactElement, useCallback, useState, useEffect, useMemo } from "react"
 import { useParams } from "react-router-dom";
-import { Button, message, Space, Table, Tooltip } from "antd";
+import { Button, message, Space, Table, Tooltip, Popconfirm } from "antd";
 import { ModelCollectionResult, SubjectAttributes } from "types"
 import { Container } from "components/Container"
 import useErrorCatcher from "hooks/useErrorCatcher";
@@ -23,12 +23,18 @@ const Layout: FC = (): ReactElement => {
   const getSubjects = useCallback(() => {
     const offset = (page - 1) * limit;
     Subject.collection({
-      attributes: ['name', 'practice', 'theory', 'semester_id'],
+      attributes: ['name', 'practice', 'theory', 'semester_id', 'creator_id', 'coordinator_id'],
       where: {
         semester_id: id,
       },
       limit,
-      offset
+      offset,
+      include: [
+        // @ts-ignore
+        { model: 'User', as: 'Coordinator', attributes: ['name'] },
+        // @ts-ignore
+        { model: 'User', as: 'Creator', attributes: ['name'] },
+      ]
     }).then(resp => {
       setSubjects(resp as ModelCollectionResult<SubjectAttributes>);
     }).catch(errorCatch);
@@ -46,11 +52,32 @@ const Layout: FC = (): ReactElement => {
     }).catch(errorCatch);
   }, [id, errorCatch, Subject, getSubjects]);
 
+  const deleteSubject = useCallback((subject: SubjectAttributes) => {
+    subject.delete().then(resp => {
+      getSubjects();
+      message.success(`Mata kuliah ${resp.name} berhasil dihapus`);
+    }).catch(errorCatch);
+  }, [errorCatch, getSubjects]);
+
   const columns: ColumnsType<SubjectAttributes> = useMemo<ColumnsType<SubjectAttributes>>(() => ([
     {
       title: 'Mata Kuliah',
       key: 'name',
       dataIndex: 'name'
+    },
+    {
+      title: 'Pembuat RPS',
+      key: 'creator',
+      render: (row: SubjectAttributes) => (
+        row.Creator.name
+      )
+    },
+    {
+      title: 'Koordinator MK',
+      key: 'coordinator',
+      render: (row: SubjectAttributes) => (
+        row.coordinator_id === null ? '-' : row.Coordinator.name
+      )
     },
     {
       title: 'Jenis Mata Kuliah',
@@ -67,13 +94,23 @@ const Layout: FC = (): ReactElement => {
           <Tooltip title={`Edit ${row.name}`}>
             <Button icon={<EditOutlined />} size="small" />
           </Tooltip>
-          <Tooltip title={`Hapus ${row.name}?`}>
-            <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+          <Tooltip placement="topRight" title={`Hapus ${row.name}?`}>
+            <Popconfirm
+              title={`Apakah Anda yakin ingin menghapus MK ${row.name}?`}
+              okText="Hapus"
+              cancelText="Batal"
+              okType="primary"
+              okButtonProps={{ danger: true }}
+              placement="topRight"
+              onConfirm={() => deleteSubject(row)}
+            >
+              <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+            </Popconfirm>
           </Tooltip>
         </Space>
       )
     }
-  ]), []);
+  ]), [deleteSubject]);
 
   return (
     <Container>
