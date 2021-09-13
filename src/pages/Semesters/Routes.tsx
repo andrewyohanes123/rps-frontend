@@ -1,5 +1,6 @@
 import { Skeleton } from "antd";
 import { Container } from "components/Container";
+import SubjectDetail from "pages/SubjectDetail";
 import { FC, ReactElement, lazy, Suspense } from "react"
 import { Switch, Route, useRouteMatch } from 'react-router-dom'
 import Semesters from ".";
@@ -16,6 +17,7 @@ const Routes: FC = (): ReactElement => {
     }>
       <Switch>
         <Route path={`${path}`} component={Semesters} exact />
+        <Route path={`${path}/:id/mata-kuliah/:subject_id`} exact component={SubjectDetail} />
         <Route path={`${path}/:id`} component={ClassRooms} />
       </Switch>
     </Suspense>

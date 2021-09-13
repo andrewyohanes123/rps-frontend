@@ -1,12 +1,12 @@
 import { FC, ReactElement, useCallback, useState, useEffect, useMemo } from "react"
 import { useParams } from "react-router-dom";
-import { Button, message, Space, Table, Tooltip, Popconfirm } from "antd";
+import { Button, message, Space, Table, Tooltip, Popconfirm, Divider } from "antd";
 import { ModelCollectionResult, SubjectAttributes } from "types"
 import { Container } from "components/Container"
 import useErrorCatcher from "hooks/useErrorCatcher";
 import useModels from "hooks/useModels";
 import { ColumnsType } from "antd/lib/table";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, ScheduleOutlined } from "@ant-design/icons";
 import AddSubject, { subjectForm } from "./AddSubject";
 
 const Layout: FC = (): ReactElement => {
@@ -87,10 +87,13 @@ const Layout: FC = (): ReactElement => {
       )
     },
     {
-      title: 'Edit | Hapus',
+      title: 'RPS | Edit | Hapus',
       key: 'action',
       render: (row: SubjectAttributes) => (
-        <Space>
+        <Space split={<Divider type="vertical" />} size={2}>
+          <Tooltip title={`RPS ${row.name}`}>
+            <Button icon={<ScheduleOutlined />} size="small" />
+          </Tooltip>
           <Tooltip title={`Edit ${row.name}`}>
             <Button icon={<EditOutlined />} size="small" />
           </Tooltip>
@@ -108,7 +111,7 @@ const Layout: FC = (): ReactElement => {
             </Popconfirm>
           </Tooltip>
         </Space>
-      )
+      ),
     }
   ]), [deleteSubject]);
 
