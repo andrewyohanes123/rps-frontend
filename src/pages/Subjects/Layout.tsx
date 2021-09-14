@@ -1,5 +1,5 @@
 import { FC, ReactElement, useCallback, useState, useEffect, useMemo } from "react"
-import { useParams } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import { Button, message, Space, Table, Tooltip, Popconfirm, Divider } from "antd";
 import { ModelCollectionResult, SubjectAttributes } from "types"
 import { Container } from "components/Container"
@@ -17,6 +17,8 @@ const Layout: FC = (): ReactElement => {
   const { models: { Subject } } = useModels();
   const { id } = useParams<{ id: string }>();
   const { errorCatch } = useErrorCatcher();
+  const { push } = useHistory();
+  const { pathname } = useLocation();
 
   document.title = "Dashboard - Mata Kuliah"
 
@@ -92,7 +94,7 @@ const Layout: FC = (): ReactElement => {
       render: (row: SubjectAttributes) => (
         <Space split={<Divider type="vertical" />} size={2}>
           <Tooltip title={`RPS ${row.name}`}>
-            <Button icon={<ScheduleOutlined />} size="small" />
+            <Button onClick={() => push(`${pathname}/${row.id}`)} icon={<ScheduleOutlined />} size="small" />
           </Tooltip>
           <Tooltip title={`Edit ${row.name}`}>
             <Button icon={<EditOutlined />} size="small" />
@@ -113,7 +115,7 @@ const Layout: FC = (): ReactElement => {
         </Space>
       ),
     }
-  ]), [deleteSubject]);
+  ]), [deleteSubject, pathname, push]);
 
   return (
     <Container>
