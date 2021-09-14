@@ -62,6 +62,7 @@ export interface SubjectAttributes extends ModelInstance {
 	type: "Teori" | "Praktek";
 	created_at?: Date;
 	updated_at?: Date;
+	support_lecturers: UserAttributes[];
 }
 
 export interface UserAttributes extends ModelInstance {
