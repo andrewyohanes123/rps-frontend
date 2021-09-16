@@ -27,7 +27,9 @@ const ContentRoutes: FC = (): ReactElement => {
           :
           <Route path={`${path}`} exact component={UserMainPage} />
         }
-        <Route path={`${path}/jadwal`} component={Schedules} />
+        {['lecturer', 'program_chief'].includes(`${user.type}`) &&
+          <Route path={`${path}/jadwal`} component={Semesters} />
+        }
         {user.type === 'administrator' &&
           <>
             <Route path={`${path}/semester`} component={Semesters} />

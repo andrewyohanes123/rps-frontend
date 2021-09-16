@@ -1,29 +1,44 @@
-import { FC, ReactElement, useEffect, useCallback, useState } from "react"
-import { useParams, useHistory } from 'react-router-dom'
-import { PageHeader, Descriptions, Skeleton, Space, Divider, Typography, Collapse } from "antd";
+import { FC, ReactElement, useEffect, useCallback, useState, useMemo } from "react"
+import { useParams, useHistory, useLocation } from 'react-router-dom'
+import { PageHeader, Select, Space, Button, Divider, Result } from "antd";
+import { parse } from "query-string";
 import useModels from "hooks/useModels";
-import { SemesterAttributes, SubjectAttributes } from "types";
+import { ClassRoomAttributes, SemesterAttributes, SubjectAttributes } from "types";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { Container } from "components/Container";
-import moment from "moment";
 import ScheduleList from "./ScheduleList";
-
-const { Item } = Descriptions;
-const { Panel } = Collapse;
+import useAuth from "hooks/useAuth";
+import SubjectDescription from "./SubjectDescription";
 
 const Layout: FC = (): ReactElement => {
   const { id, subject_id } = useParams<{ id: string; subject_id: string }>();
+  const [selectedClass, setSelectedClass] = useState<string>('');
   const { push } = useHistory();
-  const { models: { Semester, Subject } } = useModels();
+  const { search, pathname } = useLocation();
+  const { models: { Semester, Subject, ClassRoom } } = useModels();
+  const { user } = useAuth();
   const { errorCatch } = useErrorCatcher();
   const [semester, setSemester] = useState<SemesterAttributes | undefined>(undefined);
   const [subject, setSubject] = useState<SubjectAttributes | undefined>(undefined);
+  const [classRooms, setClassRooms] = useState<ClassRoomAttributes[]>([]);
+  const parsedQuery = useMemo(() => parse(search), [search]);
 
   const getSemester = useCallback(() => {
     Semester.single(parseInt(id)).then(resp => {
       setSemester(resp as SemesterAttributes);
     }).catch(errorCatch)
   }, [Semester, id, errorCatch]);
+
+  const getClassRooms = useCallback(() => {
+    ClassRoom.collection({
+      attributes: ['name'],
+      where: {
+        semester_id: id,
+      }
+    }).then(resp => {
+      setClassRooms(resp.rows as ClassRoomAttributes[]);
+    }).catch(errorCatch);
+  }, [ClassRoom, id, errorCatch]);
 
   document.title = `Dashboard - ${subject?.name ?? 'MK'}`
 
@@ -36,81 +51,49 @@ const Layout: FC = (): ReactElement => {
   useEffect(() => {
     getSubject();
     getSemester();
-  }, [getSemester, getSubject]);
+    getClassRooms();
+  }, [getSemester, getSubject, getClassRooms]);
 
   return (
     <div>
-      <PageHeader title={`${subject?.name ?? ''}`} subTitle={`Semester ${semester?.name ?? ''}`} onBack={() => push(`/dashboard/semester/${id}/mata-kuliah`)} />
+      <PageHeader title={`${subject?.name ?? ''}`} subTitle={`Semester ${semester?.name ?? ''}`} onBack={() =>
+        ['chief', 'lecturer'].includes(user.type) ?
+          push(`/dashboard/jadwal/${id}`)
+          :
+          push(`/dashboard/semester/${id}/mata-kuliah`)
+      } />
       <Container padding={18}>
+        {['chief', 'lecturer'].includes(user.type) &&
+          <Space style={{ marginBottom: 12 }} split={<Divider type="vertical" />}>
+            <Select
+              // @ts-ignore
+              onChange={val => setSelectedClass(val ?? '')}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              placeholder="Pilih kelas untuk membuat laporan RPS"
+            >
+              {classRooms.map(classroom => (
+                <Select.Option value={`${classroom.id}`} key={`${classroom.id}`}>{semester?.name} {classroom.name}</Select.Option>
+              ))}
+            </Select>
+            <Button disabled={selectedClass.length === 0} onClick={() => (push({ pathname, search: selectedClass.length > 0 ? `?kelas=${selectedClass}` : '' }))} type="primary">Pilih Kelas</Button>
+          </Space>}
         {
-          typeof subject !== 'undefined' ?
+          !['chief', 'lecturer'].includes(user.type) ?
             <>
-              <Descriptions size="small" column={6} layout="vertical" bordered>
-                <Item label="Mata Kuliah">{subject.name}</Item>
-                <Item label="Kode">{subject.code}</Item>
-                <Item label="Rumpun MK">{subject.subject_cluster}</Item>
-                <Item label="Bobot (SKS)">
-                  <Space split={<Divider type="vertical" />}>
-                    <Typography.Title level={5}>T</Typography.Title>
-                    <Typography.Text>{subject.theory_weight}</Typography.Text>
-                    <Typography.Title level={5}>P</Typography.Title>
-                    <Typography.Text>{subject.practice_weight}</Typography.Text>
-                  </Space>
-                </Item>
-                <Item label="Semester">{semester?.name}</Item>
-                <Item label="Disusun Tanggal">{moment(subject.created_at).format('DD MMMM YYYY')}</Item>
-              </Descriptions>
-              <Divider />
-              <Collapse defaultActiveKey={['otorisasi', 'achievement', 'media', 'support_lecturers', 'prerequisites']}>
-                <Panel key="otorisasi" header={<Typography.Title level={5}>OTORISASI</Typography.Title>}>
-                  <Descriptions size="small" layout="vertical" bordered>
-                    <Item label="Pembuat RPS">{subject.Creator.name}</Item>
-                    <Item span={2} label="Koordinator MK">{subject.coordinator_id === null ? '-' : subject.Coordinator.name}</Item>
-                    <Item span={2} label="Ka PRODI">Test</Item>
-                  </Descriptions>
-                </Panel>
-                <Panel key="achievement" header={<Typography.Title level={5}>Capaian Pembelajaran</Typography.Title>}>
-                  <Descriptions size="small" bordered layout="vertical">
-                    <Item span={5} label="Program Studi">
-                      {subject.program_study_achievement ?? '-'}
-                    </Item>
-                    <Item span={5} label="Mata Kuliah">
-                      {subject.subject_achievement ?? '-'}
-                    </Item>
-                  </Descriptions>
-                </Panel>
-                <Panel key="media" header={<Typography.Title level={5}>Media Pembelajaran</Typography.Title>}>
-                  <Descriptions column={2} size="small">
-                    <Item label={<Typography.Title level={5}>Software</Typography.Title>}>
-                      {subject.software ?? '-'}
-                    </Item>
-                    <Item label={<Typography.Title level={5}>Hardware</Typography.Title>}>
-                      {subject.hardware ?? '-'}
-                    </Item>
-                    <Item label={<Typography.Title level={5}>Jurnal</Typography.Title>}>
-                      {subject.journal ?? '-'}
-                    </Item>
-                    <Item label={<Typography.Title level={5}>Hardware</Typography.Title>}>
-                      {subject.guide ?? '-'}
-                    </Item>
-                  </Descriptions>
-                </Panel>
-                <Panel key="support_lecturers" header={<Typography.Title level={5}>Dosen Pengampu</Typography.Title>}>
-                  {subject.support_lecturers.length > 0 ?
-                    subject.support_lecturers.map(user => user.name).join(", ")
-                    :
-                    "-"
-                  }
-                </Panel>
-                <Panel key="prerequisites" header={<Typography.Title level={5}>Mata Kuliah Prasyarat</Typography.Title>}>
-                  Mata Kuliah core subject
-                </Panel>
-              </Collapse>
+              <SubjectDescription semester={semester} subject={subject} />
+              <ScheduleList />
             </>
             :
-            <Skeleton paragraph={{ rows: 6 }} active />
+            (['chief', 'lecturer'].includes(user.type) && typeof parsedQuery.kelas !== 'undefined') ?
+              <>
+                <SubjectDescription semester={semester} subject={subject} />
+                <ScheduleList />
+              </>
+              :
+              <Result status="info" title="Pilih kelas terlebih dahulu" subTitle="Pilih kelas untuk membuat laporan RPS" />
         }
-        <ScheduleList />
       </Container>
     </div >
   )

@@ -1,12 +1,13 @@
-import { FC, ReactElement, useCallback, useState, useEffect } from "react"
+import { FC, ReactElement, useCallback, useState, useEffect, useMemo } from "react"
 import { LoadingOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, Switch, Row, Col, Select, InputNumber } from "antd"
-import { addDataModal, UserAttributes } from "types"
+import { addDataModal, SubjectAttributes, UserAttributes } from "types"
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 
 interface props extends addDataModal {
   onSubmit: (val: subjectForm, cb: () => void) => void;
+  subject?: SubjectAttributes;
 }
 
 export type subjectForm = {
@@ -25,7 +26,7 @@ const initialValues: subjectForm = {
 
 const { useForm, Item } = Form;
 
-const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactElement => {
+const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit, subject }): ReactElement => {
   const [form] = useForm();
   const [loading, toggleLoading] = useState<boolean>(false);
   const [users, setUsers] = useState<UserAttributes[]>([]);
@@ -33,9 +34,11 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
   const { models: { User } } = useModels();
   const { errorCatch } = useErrorCatcher();
 
+  const isEdit: boolean = useMemo((): boolean => typeof subject !== 'undefined', [subject]);
+
   const clearForm = useCallback(() => {
     toggleLoading(false);
-    form.resetFields(['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware', 'practice_weight', 'theory_weight']);
+    form.resetFields(['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware', 'practice_weight', 'theory_weight', 'program_study_achievement', 'subject_achievement', 'subject_cluster']);
     onCancel();
   }, [form, onCancel]);
 
@@ -67,6 +70,15 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
     togglePractice(values.practice ?? false);
   }, []);
 
+  useEffect(() => {
+    if (isEdit) {
+      form.setFieldsValue({
+        ...subject,
+        support_lecturers: subject?.support_lecturers.map(lecturer => lecturer.user_id)
+      });
+    }
+  }, [isEdit, form, subject]);
+
   return (
     <>
       <Button onClick={onOpen}>Tambah Mata Kuliah</Button>
@@ -74,11 +86,11 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
         getContainer={false}
         onClose={onCancel}
         afterVisibleChange={handleDrawerClose}
-        height={'85%'}
+        height={'100%'}
         style={{ position: 'absolute' }}
         placement="top"
         visible={visible}
-        title='Tambah Mata Kuliah'
+        title={isEdit ? `Edit ${subject?.name}` : 'Tambah Mata Kuliah'}
         footer={null}
       >
         <Form onValuesChange={onValuesChange} initialValues={initialValues} onFinish={onFinish} form={form} layout="vertical">
@@ -95,6 +107,15 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
               </Item>
               <Item label="Koodinator MK" name="coordinator_id" rules={[{ required: false, message: 'Pilih koordinator MK' }]}>
                 <Select allowClear showSearch placeholder="Koordinator MK" optionFilterProp="children">
+                  {
+                    users.map(user => (
+                      <Select.Option value={user.id} key={`${user.id}${user.name}`}>{user.name}</Select.Option>
+                    ))
+                  }
+                </Select>
+              </Item>
+              <Item label="Dosen Pengampu" name="support_lecturers" rules={[{ required: false, message: 'Pilih dosen pengampu' }]}>
+                <Select allowClear showSearch mode="multiple" placeholder="Dosen Pengampu" optionFilterProp="children">
                   {
                     users.map(user => (
                       <Select.Option value={user.id} key={`${user.id}${user.name}`}>{user.name}</Select.Option>
@@ -128,6 +149,12 @@ const AddSubject: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEl
               </Row>
             </Col>
             <Col md={12}>
+              <Item name="program_study_achievement" rules={[{ required: true, message: 'Masukkan capaian pembelajaran program studi' }]} label="Capaian Pembelajaran Program Studi">
+                <Input.TextArea placeholder="Capaian pembelajaran program studi" rows={5} />
+              </Item>
+              <Item name="subject_achievement" rules={[{ required: true, message: 'Masukkan capaian pembelajaran mata kuliah' }]} label="Capaian Pembelajaran Mata Kuliah">
+                <Input.TextArea placeholder="Capaian pembelajaran mata kuliah" rows={5} />
+              </Item>
               <Item name="subject_cluster" rules={[{ required: true, message: 'Masukkan rumpun MK' }]} label="Rumpun MK">
                 <Input.TextArea placeholder="Rumpun Mata Kuliah" rows={3} />
               </Item>

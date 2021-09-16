@@ -9,6 +9,7 @@ import { ModelCollectionResult, SemesterAttributes } from "types";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { ColumnsType } from "antd/lib/table";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import useAuth from "hooks/useAuth";
 
 const Layout: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
@@ -17,7 +18,8 @@ const Layout: FC = (): ReactElement => {
   const [limit] = useState<number>(10);
   const { models: { Semester } } = useModels();
   const { errorCatch } = useErrorCatcher();
-  const {path} = useRouteMatch();
+  const { user } = useAuth();
+  const { path } = useRouteMatch();
 
   document.title = "Dashboard - Semester";
 
@@ -84,7 +86,7 @@ const Layout: FC = (): ReactElement => {
 
   return (
     <Container>
-      <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />
+      {user.type === 'administrator' && <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
       <Table
         style={{ marginTop: 10 }}
         dataSource={semesters.rows}

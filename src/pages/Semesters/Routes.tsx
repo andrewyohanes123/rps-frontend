@@ -1,6 +1,8 @@
 import { Skeleton } from "antd";
 import { Container } from "components/Container";
+import useAuth from "hooks/useAuth";
 import SubjectDetail from "pages/SubjectDetail";
+import Subjects from "pages/Subjects/Router";
 import { FC, ReactElement, lazy, Suspense } from "react"
 import { Switch, Route, useRouteMatch } from 'react-router-dom'
 import Semesters from ".";
@@ -9,6 +11,8 @@ const ClassRooms = lazy(() => import('pages/ClassRooms/Routes'));
 
 const Routes: FC = (): ReactElement => {
   const { path } = useRouteMatch();
+  const { user } = useAuth();
+
   return (
     <Suspense fallback={
       <Container>
@@ -18,7 +22,12 @@ const Routes: FC = (): ReactElement => {
       <Switch>
         <Route path={`${path}`} component={Semesters} exact />
         <Route path={`${path}/:id/mata-kuliah/:subject_id`} exact component={SubjectDetail} />
-        <Route path={`${path}/:id`} component={ClassRooms} />
+        {
+          ['lecturer', 'program_chief'].includes(user.type) ?
+            <Route path={`${path}/:id`} component={Subjects} />
+            :
+            <Route path={`${path}/:id`} component={ClassRooms} />
+        }
       </Switch>
     </Suspense>
   )

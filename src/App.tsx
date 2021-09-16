@@ -33,11 +33,11 @@ const App: FC = (): ReactElement => {
       ready ?
       <ConfigProvider locale={locale} >
         <Switch>
-          <Route path="/" exact component={Home} />
+          <Route path="/" exact component={Login} />
           <Route path="/kuesioner" exact component={QuestionerStudent} />
-          <Route path="/login" exact component={Login} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="*" component={FourOFour} />
+          <Route path="/" exact component={Home} />
         </Switch>
       </ConfigProvider>
         :
