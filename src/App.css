@@ -1,3 +1,7 @@
 html, body, div#root {
   height: 100%;
 }
+
+.ant-descriptions-item-content {
+  white-space: pre !important;
+}

@@ -1,12 +1,12 @@
 import { FC, ReactElement, useMemo, useEffect, useState, useCallback } from "react"
-import { Button, Divider, message, Popconfirm, Space, Table, Tooltip } from 'antd'
+import { Button, Divider, message, Popconfirm, Space, Table, Tag, Tooltip } from 'antd'
 import { parse } from 'query-string'
 import { ColumnType } from "antd/lib/table";
-import { ScheduleAttributes } from "types";
+import { ReportAttributes, ScheduleAttributes } from "types";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { useParams, useLocation } from "react-router-dom";
-import { DeleteOutlined, EditOutlined, CheckOutlined, LoadingOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, CheckOutlined, LoadingOutlined, CloseOutlined } from "@ant-design/icons";
 import AddPlan, { scheduleType } from "./AddPlan";
 import useAuth from "hooks/useAuth";
 
@@ -18,6 +18,7 @@ const { Column, ColumnGroup } = Table;
 
 const ScheduleList: FC = (): ReactElement => {
   const [schedules, setSchedules] = useState<ScheduleAttributes[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleAttributes | undefined>(undefined);
   const [loading, toggleLoading] = useState<boolean>(true);
   const [modal, toggleModal] = useState<boolean>(false);
   const { user } = useAuth();
@@ -48,7 +49,8 @@ const ScheduleList: FC = (): ReactElement => {
               required: false
             }
           ]
-        })
+        }),
+        order: [['created_at', 'asc']]
     }).then(resp => {
       toggleLoading(false);
       setSchedules(resp.rows as ScheduleAttributes[]);
@@ -69,21 +71,17 @@ const ScheduleList: FC = (): ReactElement => {
     }).catch(errorCatch);
   }, [Schedule, errorCatch, getSchedules, subject_id]);
 
-  const getWeekCount = useCallback((idx: number): number => {
-    const prevIndex = idx - 1 < 0 ? 0 : idx - 1;
-    const prevWeekCount = schedules[prevIndex].week_count;
-    return prevWeekCount + (idx);
+  const getSumToCurrentIndex = useCallback((index: number) => {
+    if (index > 0) {
+      return schedules.filter((val, idx) => idx <= index).map(row => (row.week_count)).reduce((a, b) => (a + b));
+    } else {
+      return 1;
+    }
   }, [schedules]);
 
-  const getMultipleWeekCount = useCallback((idx: number, value) => {
-    // const prevRow = getWeekCount(idx);
-    // console.log(prevRow);
-    const prevWeekCount = schedules[idx - 1 < 0 ? 0 : idx - 1].week_count;
-    return prevWeekCount > 1 ?
-      Array(value).fill(0).map((i, id) => (i + 1) + (id + 1) + (idx)).join(', ')
-      :
-      Array(value).fill(0).map((i, id) => (i) + (id + 1) + idx).join(', ')
-  }, [schedules]);
+  const getMultipleWeekCount = useCallback((value: number, count: number): string => {
+    return Array(count).fill(0).map((element: number, index) => (element) + (index + (value - 1))).join(', ')
+  }, []);
 
   const deleteSchedule = useCallback((schedule: ScheduleAttributes) => {
     schedule.delete().then(resp => {
@@ -93,8 +91,21 @@ const ScheduleList: FC = (): ReactElement => {
     }).catch(errorCatch);
   }, [getSchedules, errorCatch]);
 
-  const createReport = useCallback((schedule_id: number) => {
-    Report.create({ check: true, user_id: user.id, schedule_id, class_room_id: kelas }).then(resp => {
+  const updateSchedule = useCallback((val: scheduleType, cb: () => void) => {
+    if (typeof schedule !== 'undefined') {
+      schedule.update(val).then(resp => {
+        message.success(`Data pertemuan berhasil di-update`);
+        getSchedules(false);
+        console.log(resp);
+        cb();
+        toggleModal(false);
+        setSchedule(undefined);
+      }).catch(errorCatch);
+    }
+  }, [schedule, getSchedules, errorCatch]);
+
+  const createReport = useCallback((schedule_id: number, check: boolean) => {
+    Report.create({ check, user_id: user.id, schedule_id, class_room_id: kelas }).then(resp => {
       message.success('Ceklis berhasil');
       getSchedules(false);
     }).catch(errorCatch);
@@ -107,11 +118,15 @@ const ScheduleList: FC = (): ReactElement => {
       dataIndex: 'week_count',
       width: 100,
       fixed: 'left',
-      render: (v: number, r, idx) => (
-        v > 1 ?
-          getMultipleWeekCount(idx, v)
+      render: (value: number, row: ScheduleAttributes, idx) => (
+        value > 1 ?
+          getMultipleWeekCount(getSumToCurrentIndex(idx), value)
           :
-          getWeekCount(idx)
+          getSumToCurrentIndex(idx)
+        // v > 1 ?
+        //   getMultipleWeekCount(idx, v)
+        //   :
+        //   getWeekCount(idx)
       )
     },
     {
@@ -119,16 +134,16 @@ const ScheduleList: FC = (): ReactElement => {
       dataIndex: 'capabilities',
       width: 180,
       render: (val: string, row: ScheduleAttributes, idx: number) => (
-        !['8', '16'].includes(getWeekCount(idx).toString()) ?
+        !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
           (
             val
           ) : (
             {
-              children: ['8', '16'].includes(getWeekCount(idx).toString()) ?
-                getWeekCount(idx) === 8 ?
+              children: ['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
+                getSumToCurrentIndex(idx) === 8 ?
                   'Evaluasi Tengah Semester: Melakukan validasi hasil penilaian dan evaluasi'
                   :
-                  getWeekCount(idx) === 16 ?
+                  getSumToCurrentIndex(idx) === 16 ?
                     'Evaluasi Akhir Semester: Melakukan validasi hasil penilaian akhir dan menentukan kelulusan mahasiswa'
                     :
                     'Evaluasi'
@@ -145,7 +160,7 @@ const ScheduleList: FC = (): ReactElement => {
       dataIndex: 'study_material',
       width: 180,
       render: (val: string, row: ScheduleAttributes, idx: number) => (
-        !['8', '16'].includes(getWeekCount(idx).toString()) ?
+        !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
           (
             val
           ) : (
@@ -163,7 +178,7 @@ const ScheduleList: FC = (): ReactElement => {
       dataIndex: 'study_method',
       width: 180,
       render: (val: string, row: ScheduleAttributes, idx: number) => (
-        !['8', '16'].includes(getWeekCount(idx).toString()) ?
+        !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
           (
             val
           ) : (
@@ -184,7 +199,7 @@ const ScheduleList: FC = (): ReactElement => {
         dataIndex: 'indicator',
         width: 180,
         render: (val: string, row: ScheduleAttributes, idx: number) => (
-          !['8', '16'].includes(getWeekCount(idx).toString()) ?
+          !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
             (
               val
             ) : (
@@ -202,7 +217,7 @@ const ScheduleList: FC = (): ReactElement => {
         dataIndex: 'scoring_format_criteria',
         width: 180,
         render: (val: string, row: ScheduleAttributes, idx: number) => (
-          !['8', '16'].includes(getWeekCount(idx).toString()) ?
+          !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
             (
               val
             ) : (
@@ -220,7 +235,7 @@ const ScheduleList: FC = (): ReactElement => {
         dataIndex: 'description',
         width: 180,
         render: (val: string, row: ScheduleAttributes, idx: number) => (
-          !['8', '16'].includes(getWeekCount(idx).toString()) ?
+          !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
             (
               val
             ) : (
@@ -238,7 +253,7 @@ const ScheduleList: FC = (): ReactElement => {
         dataIndex: 'value',
         width: 180,
         render: (val: string, row: ScheduleAttributes, idx: number) => (
-          !['8', '16'].includes(getWeekCount(idx).toString()) ?
+          !['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ?
             (
               val
             ) : (
@@ -257,39 +272,75 @@ const ScheduleList: FC = (): ReactElement => {
       render: (row: ScheduleAttributes, record, idx: number) => (
         <Space split={<Divider type="vertical" />}>
           {user.type === 'lecturer' &&
-            <Tooltip title={`Ceklis Pertemuan`}>
-              <Button onClick={() =>
-                row.reports.length === 0 ?
-                  createReport(row.id)
-                  :
-                  message.info(`Pertemuan ${getWeekCount(idx)} sudah di-ceklis`)
-              } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
-            </Tooltip>}
-          <Tooltip title={'Edit'}>
-            <Button icon={<EditOutlined />} size="small" />
-          </Tooltip>
-          <Tooltip title="Hapus jadwal">
-            <Popconfirm
-              title="Apakah Anda ingin menghapus jadwal ini?"
-              placement="topRight"
-              okText="Hapus"
-              cancelText="Batal"
-              okButtonProps={{ type: 'primary', danger: true }}
-              onConfirm={() => deleteSchedule(row)}
-            >
-              <Button icon={<DeleteOutlined />} danger type="primary" size="small" />
-            </Popconfirm>
-          </Tooltip>
+            row.reports.length === 0 ?
+            <>
+              <Tooltip title={`Sesuai`}>
+                <Button onClick={() =>
+                  row.reports.length === 0 ?
+                    createReport(row.id, true)
+                    :
+                    message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
+              </Tooltip>
+              <Tooltip title={`Tidak Sesuai`}>
+                <Button onClick={() =>
+                  row.reports.length === 0 ?
+                    createReport(row.id, false)
+                    :
+                    message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
+              </Tooltip>
+            </>
+            :
+            row.reports.map((report: ReportAttributes) => (
+              report.check ?
+                <Tag color="green">Sesuai</Tag>
+                :
+                <Tag color="error">Tidak Sesuai</Tag>
+            ))
+          }
+          {['administrator', 'lecturer'].includes(user.type) &&
+            <>
+              <Tooltip title={'Edit'}>
+                <Button
+                  onClick={() => {
+                    setSchedule(row);
+                    toggleModal(true);
+                  }}
+                  icon={<EditOutlined />} size="small" />
+              </Tooltip>
+              <Tooltip title="Hapus jadwal">
+                <Popconfirm
+                  title="Apakah Anda ingin menghapus jadwal ini?"
+                  placement="topRight"
+                  okText="Hapus"
+                  cancelText="Batal"
+                  okButtonProps={{ type: 'primary', danger: true }}
+                  onConfirm={() => deleteSchedule(row)}
+                >
+                  <Button icon={<DeleteOutlined />} danger type="primary" size="small" />
+                </Popconfirm>
+              </Tooltip>
+            </>}
         </Space>
       ),
       width: 250,
       fixed: 'right'
     }
-  ]), [getWeekCount, getMultipleWeekCount, deleteSchedule, user, createReport]);
+  ]), [getMultipleWeekCount, deleteSchedule, user, createReport, getSumToCurrentIndex]);
 
   return (
     <div>
-      <AddPlan onSubmit={createSchedule} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} visible={modal} />
+      {['administrator', 'lecturer'].includes(user.type) &&
+        <AddPlan schedule={schedule}
+          onSubmit={typeof schedule !== 'undefined' ? updateSchedule : createSchedule}
+          onCancel={() => {
+            toggleModal(false);
+            setSchedule(undefined);
+          }}
+          onOpen={() => toggleModal(true)}
+          visible={modal}
+        />}
       <Table
         dataSource={schedules}
         loading={{ spinning: loading, size: 'large', tip: 'Mengambil data jadwal', indicator: <LoadingOutlined spin /> }}

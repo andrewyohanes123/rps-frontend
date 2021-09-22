@@ -72,6 +72,7 @@ const Layout: FC = (): ReactElement => {
               showSearch
               optionFilterProp="children"
               placeholder="Pilih kelas untuk membuat laporan RPS"
+              defaultValue={parsedQuery.kelas ?? undefined}
             >
               {classRooms.map(classroom => (
                 <Select.Option value={`${classroom.id}`} key={`${classroom.id}`}>{semester?.name} {classroom.name}</Select.Option>

@@ -4,12 +4,13 @@ import { useParams } from "react-router-dom";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { ClassRoomAttributes, ModelCollectionResult, SemesterAttributes } from "types";
 import { Container } from "components/Container";
-import { Button, List, Space, Tooltip, Typography } from "antd";
+import { Button, Divider, List, Space, Tooltip, Typography } from "antd";
 import AddClassRoom from "./AddClassRoom";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 
 const Layout: FC = (): ReactElement => {
   const [classes, setClasses] = useState<ModelCollectionResult<ClassRoomAttributes>>({ rows: [], count: 0 });
+  const [classRoom, setClassRoom] = useState<ClassRoomAttributes | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const [semester, setSemester] = useState<SemesterAttributes | undefined>(undefined);
@@ -76,10 +77,14 @@ const Layout: FC = (): ReactElement => {
       <Typography.Title level={4}>Semester {semester?.name}</Typography.Title>
       <AddClassRoom
         semester={semester?.name ?? ''}
-        onCancel={() => toggleModal(false)}
+        onCancel={() => {
+          toggleModal(false);
+          setClassRoom(undefined);
+        }}
         visible={modal}
         onOpen={() => toggleModal(true)}
         onSubmit={createClassRoom}
+        classRoom={classRoom}
       />
       <List
         bordered
@@ -94,9 +99,12 @@ const Layout: FC = (): ReactElement => {
                 {item.name}
               </Typography.Text>
             </span>
-            <Space>
+            <Space split={<Divider type="vertical" />} size={2}>
               <Tooltip title={`Edit ${item.name}`}>
-                <Button size="small" icon={<EditOutlined />} />
+                <Button onClick={() => {
+                  toggleModal(true);
+                  setClassRoom(item);
+                }} size="small" icon={<EditOutlined />} />
               </Tooltip>
               <Tooltip placement="topRight" title={`Hapus ${item.name}?`}>
                 <Button size="small" danger type="primary" icon={<DeleteOutlined />} />

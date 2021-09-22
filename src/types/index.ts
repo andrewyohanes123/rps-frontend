@@ -82,9 +82,7 @@ export interface SemesterAttributes extends ModelInstance {
 }
 
 export interface ReportAttributes extends ModelInstance {
-  file: string;
-  description: {[any: string]: any}[];
-  user_id?: number;
+	check: boolean;
   schedule_id?: number;
 	created_at?: Date;
 	updated_at?: Date;

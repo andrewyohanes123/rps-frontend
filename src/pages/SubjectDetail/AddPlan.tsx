@@ -1,6 +1,6 @@
-import { FC, ReactElement, useCallback, useState } from "react"
+import { FC, ReactElement, useCallback, useState, useMemo, useEffect } from "react"
 import { Drawer, Form, Input, InputNumber, Button, Row, Col } from 'antd'
-import { addDataModal } from 'types'
+import { addDataModal, ScheduleAttributes } from 'types'
 
 export type scheduleType = {
   week_count: number;
@@ -15,6 +15,7 @@ export type scheduleType = {
 
 interface props extends addDataModal {
   onSubmit: (value: scheduleType, cb: () => void) => void;
+  schedule?: ScheduleAttributes;
 }
 
 const { Item, useForm } = Form;
@@ -30,9 +31,11 @@ const initialValues: scheduleType = {
   study_method: ''
 }
 
-const AddPlan: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactElement => {
+const AddPlan: FC<props> = ({ visible, onCancel, onOpen, onSubmit, schedule }): ReactElement => {
   const [form] = useForm();
   const [loading, toggleLoading] = useState<boolean>(false);
+
+  const isEdit: boolean = useMemo(() => (typeof schedule !== 'undefined'), [schedule]);
 
   const clearForm = useCallback(() => {
     toggleLoading(false);
@@ -43,10 +46,18 @@ const AddPlan: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEleme
     onSubmit(val, clearForm);
   }, [clearForm, onSubmit]);
 
+  useEffect(() => {
+    if (typeof schedule !== 'undefined') {
+      form.setFieldsValue({
+        ...schedule
+      })
+    }
+  }, [form, schedule, ])
+
   return (
     <>
       <Button style={{ marginTop: 12 }} onClick={onOpen}>Tambah Pertemuan</Button>
-      <Drawer placement="top" height="100%" style={{ position: 'absolute' }} getContainer={false} visible={visible} onClose={onCancel} title="Tambah Pertemuan">
+      <Drawer placement="top" height="100%" style={{ position: 'absolute' }} getContainer={false} visible={visible} onClose={onCancel} title={isEdit ? "Edit Pertemuan" : "Tambah Pertemuan"}>
         <Form initialValues={initialValues} onFinish={onFinish} form={form} layout="vertical">
           <Row gutter={[16, 16]}>
             <Col md={12}>
@@ -59,21 +70,21 @@ const AddPlan: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEleme
               <Item name="capabilities" label="Kemampuan akhir yang diharapkan" rules={[{ required: true, message: 'Masukkan kemampuan akhir yang diharapkan' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Kemampuan akhir yang diharapkan" />
               </Item>
-              <Item name="study_material" label="Bahan kajian" rules={[{ required: true, message: 'Masukkan bahan kajian' }]}>
+              <Item name="study_material" label="Bahan kajian" rules={[{ required: false, message: 'Masukkan bahan kajian' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Bahan kajian" />
               </Item>
-              <Item name="study_method" label="Metode pembelajaran dan estimasi waktu" rules={[{ required: true, message: 'masukkan metode pembelajaran dan estimasi waktu' }]}>
+              <Item name="study_method" label="Metode pembelajaran dan estimasi waktu" rules={[{ required: false, message: 'masukkan metode pembelajaran dan estimasi waktu' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Metode pembelajaran dan estimasi waktu" />
               </Item>
             </Col>
             <Col md={12}>
-              <Item name="indicator" label="Indikator" rules={[{ required: true, message: 'masukkan indikator' }]}>
+              <Item name="indicator" label="Indikator" rules={[{ required: false, message: 'masukkan indikator' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Indikator" />
               </Item>
-              <Item name="scoring_format_criteria" label="Kriteria dan bentuk penilaian" rules={[{ required: true, message: 'masukkan kriteria dan bentuk penilaian' }]}>
+              <Item name="scoring_format_criteria" label="Kriteria dan bentuk penilaian" rules={[{ required: false, message: 'masukkan kriteria dan bentuk penilaian' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Kriteria dan bentuk penilaian" />
               </Item>
-              <Item name="description" label="Deskripsi tugas" rules={[{ required: true, message: 'masukkan deskripsi tugas' }]}>
+              <Item name="description" label="Deskripsi tugas" rules={[{ required: false, message: 'masukkan deskripsi tugas' }]}>
                 <Input.TextArea disabled={loading} rows={5} placeholder="Deskripsi tugas" />
               </Item>
             </Col>

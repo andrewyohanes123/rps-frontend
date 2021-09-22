@@ -23,7 +23,7 @@ const Routes: FC = (): ReactElement => {
         <Route path={`${path}`} component={Semesters} exact />
         <Route path={`${path}/:id/mata-kuliah/:subject_id`} exact component={SubjectDetail} />
         {
-          ['lecturer', 'program_chief'].includes(user.type) ?
+          ['lecturer', 'chief'].includes(user.type) ?
             <Route path={`${path}/:id`} component={Subjects} />
             :
             <Route path={`${path}/:id`} component={ClassRooms} />

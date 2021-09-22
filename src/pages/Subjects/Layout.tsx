@@ -121,18 +121,20 @@ const Layout: FC = (): ReactElement => {
       )
     },
     {
-      title: 'RPS | Edit | Hapus',
+      title: user.type !== 'administator' ? 'RPS' : 'RPS | Edit | Hapus',
       key: 'action',
       render: (row: SubjectAttributes) => (
         <Space split={<Divider type="vertical" />} size={2}>
           <Tooltip title={`RPS ${row.name}`}>
             <Button onClick={() =>
-              ['lecturer', 'program_chief'].includes(user.type) ?
+              ['lecturer', 'chief'].includes(user.type) ?
                 push(`${pathname}/mata-kuliah/${row.id}`)
                 :
                 push(`${pathname}/${row.id}`)
             } icon={<ScheduleOutlined />} size="small" />
           </Tooltip>
+          { ['administrator'].includes(user.type) &&
+            <>
           <Tooltip title={`Edit ${row.name}`}>
             <Button onClick={() => {
               setSubject(row);
@@ -152,6 +154,7 @@ const Layout: FC = (): ReactElement => {
               <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
             </Popconfirm>
           </Tooltip>
+          </>}
         </Space>
       ),
     }

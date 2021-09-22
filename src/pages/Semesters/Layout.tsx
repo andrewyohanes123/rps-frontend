@@ -1,6 +1,6 @@
 import { FC, ReactElement, useState, useCallback, useEffect, useMemo } from "react"
+import { Table, Button, Space, Tooltip, Divider, DatePicker } from 'antd'
 import moment from "moment";
-import { Table, Button, Space, Tooltip } from 'antd'
 import { Link, useRouteMatch } from 'react-router-dom'
 import useModels from "hooks/useModels";
 import { Container } from "components/Container"
@@ -11,9 +11,12 @@ import { ColumnsType } from "antd/lib/table";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import useAuth from "hooks/useAuth";
 
+const currentDate = new Date();
+
 const Layout: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
   const [semesters, setSemesters] = useState<ModelCollectionResult<SemesterAttributes>>({ rows: [], count: 0 });
+  const [currentYear, setCurrentYear] = useState<moment.Moment>(moment(currentDate));
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const { models: { Semester } } = useModels();
@@ -37,10 +40,10 @@ const Layout: FC = (): ReactElement => {
         dataIndex: 'year',
         render: (val: string) => `${moment(val).format('YYYY')}/${moment(val).add(1, 'year').format('YYYY')}`
       },
-      {
+      ...(user.type === 'administrator' ? [{
         title: 'Edit | Hapus',
         render: (row: SemesterAttributes) => (
-          <Space>
+          <Space split={<Divider type="vertical" />} size={2}>
             <Tooltip title={`Edit semester ${row.name}`}>
               <Button size="small" icon={<EditOutlined />} />
             </Tooltip>
@@ -49,9 +52,9 @@ const Layout: FC = (): ReactElement => {
             </Tooltip>
           </Space>
         )
-      }
+      }] : [])
     ]
-  ), [path])
+  ), [path, user])
 
   const getSemester = useCallback(() => {
     const offset: number = (page - 1) * limit;
@@ -59,12 +62,18 @@ const Layout: FC = (): ReactElement => {
       limit,
       offset,
       attributes: ['name', 'year'],
+      where: {
+        year: {
+          $lte: moment(currentYear).endOf('year').format('YYYY-MM-DD'),
+          $gte: moment(currentYear).startOf('year').format('YYYY-MM-DD'),
+        }
+      }
     }).then(resp => {
       setSemesters(resp as ModelCollectionResult<SemesterAttributes>);
     }).catch(e => {
       errorCatch(e);
     })
-  }, [Semester, limit, page, errorCatch]);
+  }, [Semester, limit, page, errorCatch, currentYear]);
 
   useEffect(() => {
     getSemester();
@@ -86,7 +95,10 @@ const Layout: FC = (): ReactElement => {
 
   return (
     <Container>
-      {user.type === 'administrator' && <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
+      <Space split={<Divider type="vertical" />}>
+        {user.type === 'administrator' && <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
+        <DatePicker.YearPicker allowClear={false} value={currentYear} onChange={(val) => setCurrentYear(val as moment.Moment)} placeholder="Pilih periode tahun semester" />
+      </Space>
       <Table
         style={{ marginTop: 10 }}
         dataSource={semesters.rows}
