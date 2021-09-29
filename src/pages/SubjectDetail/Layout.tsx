@@ -9,6 +9,8 @@ import { Container } from "components/Container";
 import ScheduleList from "./ScheduleList";
 import useAuth from "hooks/useAuth";
 import SubjectDescription from "./SubjectDescription";
+import ScheduleStatistic from "./ScheduleStatistic";
+import Comments from "./Comments";
 
 const Layout: FC = (): ReactElement => {
   const { id, subject_id } = useParams<{ id: string; subject_id: string }>();
@@ -40,7 +42,7 @@ const Layout: FC = (): ReactElement => {
     }).catch(errorCatch);
   }, [ClassRoom, id, errorCatch]);
 
-  document.title = `Dashboard - ${subject?.name ?? 'MK'}`
+  document.title = user === null ? `Sistem RPS - ${subject?.name ?? 'MK'}` : `Dashboard - ${subject?.name ?? 'MK'}`
 
   const getSubject = useCallback(() => {
     Subject.single(parseInt(subject_id)).then(resp => {
@@ -57,13 +59,16 @@ const Layout: FC = (): ReactElement => {
   return (
     <div>
       <PageHeader title={`${subject?.name ?? ''}`} subTitle={`Semester ${semester?.name ?? ''}`} onBack={() =>
-        ['chief', 'lecturer'].includes(user.type) ?
-          push(`/dashboard/jadwal/${id}`)
+        user === null ?
+          push(`/jadwal/${id}`)
           :
-          push(`/dashboard/semester/${id}/mata-kuliah`)
+          ['chief', 'lecturer'].includes(user?.type) ?
+            push(`/dashboard/jadwal/${id}`)
+            :
+            push(`/dashboard/semester/${id}/mata-kuliah`)
       } />
       <Container padding={18}>
-        {['chief', 'lecturer'].includes(user.type) &&
+        {['chief', 'lecturer'].includes(user?.type) &&
           <Space style={{ marginBottom: 12 }} split={<Divider type="vertical" />}>
             <Select
               // @ts-ignore
@@ -80,14 +85,17 @@ const Layout: FC = (): ReactElement => {
             </Select>
             <Button disabled={selectedClass.length === 0} onClick={() => (push({ pathname, search: selectedClass.length > 0 ? `?kelas=${selectedClass}` : '' }))} type="primary">Pilih Kelas</Button>
           </Space>}
+        {(user?.type === 'chief' && typeof parsedQuery.kelas !== 'undefined') &&
+          <ScheduleStatistic />
+        }
         {
-          !['chief', 'lecturer'].includes(user.type) ?
+          !['chief', 'lecturer'].includes(user?.type) ?
             <>
               <SubjectDescription semester={semester} subject={subject} />
               <ScheduleList />
             </>
             :
-            (['chief', 'lecturer'].includes(user.type) && typeof parsedQuery.kelas !== 'undefined') ?
+            (['chief', 'lecturer'].includes(user?.type) && typeof parsedQuery.kelas !== 'undefined') ?
               <>
                 <SubjectDescription semester={semester} subject={subject} />
                 <ScheduleList />
@@ -95,6 +103,7 @@ const Layout: FC = (): ReactElement => {
               :
               <Result status="info" title="Pilih kelas terlebih dahulu" subTitle="Pilih kelas untuk membuat laporan RPS" />
         }
+        <Comments />
       </Container>
     </div >
   )

@@ -5,7 +5,7 @@ export default function useAuth() {
   const {auth, setLogin, setLogout, login, user, setAuth} = useContext(UserContext);
   return {
     setAuth: setAuth!,
-    user: user!,
+    user: user,
     login: login,
     setLogin: setLogin!,
     setLogout: setLogout!,

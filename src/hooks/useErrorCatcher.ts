@@ -1,4 +1,4 @@
-import {useCallback} from 'react'
+import { useCallback, useMemo } from 'react'
 import ErrorCatcher from 'modules/ErrorCatcher'
 import useAuth from './useAuth'
 
@@ -10,7 +10,7 @@ const useErrorCatcher = () => {
     // eslint-disable-next-line
   }, [auth, setLogout]);
 
-  return { errorCatch };
+  return useMemo(() => ({ errorCatch }), [errorCatch]);
 }
 
 export default useErrorCatcher;

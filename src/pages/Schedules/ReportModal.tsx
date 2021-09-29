@@ -50,7 +50,7 @@ const ReportModal: FC<props> = ({ schedule, visible, onCancel }): ReactElement =
   const createReport = useCallback((file: RcFile, cb: () => void) => {
     const formData = new FormData();
     formData.append('report', file);
-    formData.append('user_id', `${user.id}`);
+    formData.append('user_id', `${user?.id}`);
     formData.append('schedule_id', `${schedule?.id}`);
     formData.append('class_room_id', `${schedule?.class_room_id}`);
     Report.create(formData).then(resp => {

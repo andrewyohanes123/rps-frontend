@@ -31,14 +31,14 @@ const Layout: FC = (): ReactElement => {
       attributes: ['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware', 'practice_weight', 'theory_weight', 'program_study_achievement', 'subject_achievement', 'subject_cluster'],
       where: {
         semester_id: id,
-        ...(user.type === 'lecturer' &&
+        ...(user?.type === 'lecturer' &&
         {
           $or: [
             {
-              coordinator_id: user.id
+              coordinator_id: user?.id
             },
             {
-              creator_id: user.id
+              creator_id: user?.id
             }
           ]
         })
@@ -121,19 +121,19 @@ const Layout: FC = (): ReactElement => {
       )
     },
     {
-      title: user.type !== 'administator' ? 'RPS' : 'RPS | Edit | Hapus',
+      title: user?.type !== 'administator' ? 'RPS' : 'RPS | Edit | Hapus',
       key: 'action',
       render: (row: SubjectAttributes) => (
         <Space split={<Divider type="vertical" />} size={2}>
           <Tooltip title={`RPS ${row.name}`}>
             <Button onClick={() =>
-              ['lecturer', 'chief'].includes(user.type) ?
+              (['lecturer', 'chief'].includes(user?.type) || user === null) ?
                 push(`${pathname}/mata-kuliah/${row.id}`)
                 :
                 push(`${pathname}/${row.id}`)
             } icon={<ScheduleOutlined />} size="small" />
           </Tooltip>
-          { ['administrator'].includes(user.type) &&
+          { ['administrator'].includes(user?.type) &&
             <>
           <Tooltip title={`Edit ${row.name}`}>
             <Button onClick={() => {
@@ -162,7 +162,7 @@ const Layout: FC = (): ReactElement => {
 
   return (
     <Container>
-      {user.type === 'administrator' &&
+      {user?.type === 'administrator' &&
         <AddSubject
           subject={subject}
           visible={modal}
@@ -173,8 +173,8 @@ const Layout: FC = (): ReactElement => {
           onOpen={() => toggleModal(true)}
           onSubmit={typeof subject !== 'undefined' ? updateSubject : createSubject}
         />}
-      {['lecturer', 'chief'].includes(user.type) &&
-        <PageHeader title="Mata Kuliah" onBack={() => push('/dashboard/jadwal')} />
+      {(['lecturer', 'chief'].includes(user?.type) || user === null) &&
+        <PageHeader title="Mata Kuliah" onBack={() => push(user === null ? '/jadwal' : '/dashboard/jadwal')} />
       }
       <Table
         dataSource={subjects.rows}

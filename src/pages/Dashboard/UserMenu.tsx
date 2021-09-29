@@ -32,7 +32,7 @@ const UserMenu: FC = (): ReactElement => {
 
   return (
     <Dropdown overlay={menu} trigger={['click']}>
-      <Button type="link" icon={<UserOutlined />}>{user.name}</Button>
+      <Button type="link" icon={<UserOutlined />}>{user?.name}</Button>
     </Dropdown>
   )
 }

@@ -65,7 +65,7 @@ const UploadPlan: FC<props> = ({ visible, onCancel, schedule }): ReactElement =>
     console.log(file, files);
     formData.append('plan', file);
     formData.append('schedule_id', `${schedule_id}`);
-    formData.append('user_id', `${user.id}`);
+    formData.append('user_id', `${user?.id}`);
     axios.post(`${baseUrl}/api/plans`, formData, {
       headers: {
         'x-access-token': xAccessToken,

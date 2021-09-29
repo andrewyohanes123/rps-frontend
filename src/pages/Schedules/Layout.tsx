@@ -24,8 +24,8 @@ const Layout: FC = (): ReactElement => {
   const { user } = useAuth();
   const { errorCatch } = useErrorCatcher();
 
-  const isAdmin: boolean = useMemo<boolean>(() => user.type === 'administrator', [user]);
-  const isChief: boolean = useMemo<boolean>(() => user.type === 'chief', [user]);
+  const isAdmin: boolean = useMemo<boolean>(() => user?.type === 'administrator', [user]);
+  const isChief: boolean = useMemo<boolean>(() => user?.type === 'chief', [user]);
 
   const getSchedule = useCallback(() => {
     const offset = (page - 1) * limit;
@@ -97,7 +97,7 @@ const Layout: FC = (): ReactElement => {
     {
       title: 'Dosen',
       key: 'lecturer',
-      render: (row: ScheduleAttributes) => (row.user === null ? '-' : row.user.name)
+      render: (row: ScheduleAttributes) => (row.user === null ? '-' : row.user?.name)
     },
     {
       title: !isAdmin ? 'RPS dan Laporan' : 'Edit | Hapus',

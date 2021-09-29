@@ -36,7 +36,7 @@ const ScheduleList: FC = (): ReactElement => {
         subject_id
       },
       ...(
-        ['lecturer', 'chief'].includes(user.type) &&
+        ['lecturer', 'chief'].includes(user?.type) &&
         {
           include: [
             {
@@ -105,7 +105,7 @@ const ScheduleList: FC = (): ReactElement => {
   }, [schedule, getSchedules, errorCatch]);
 
   const createReport = useCallback((schedule_id: number, check: boolean) => {
-    Report.create({ check, user_id: user.id, schedule_id, class_room_id: kelas }).then(resp => {
+    Report.create({ check, user_id: user?.id, schedule_id, class_room_id: kelas }).then(resp => {
       message.success('Ceklis berhasil');
       getSchedules(false);
     }).catch(errorCatch);
@@ -266,79 +266,85 @@ const ScheduleList: FC = (): ReactElement => {
             )
         )
       },],
-    }, {
-      title: user.type === 'chief' ? 'Laporan' : 'Laporan | Edit | Hapus',
-      key: 'action',
-      render: (row: ScheduleAttributes, record, idx: number) => (
-        <Space split={<Divider type="vertical" />}>
-          {['lecturer', 'chief'].includes(user.type) &&
-            <>
-              {
-                (row.reports.length === 0 && user.type === 'lecturer') ?
-                  <>
-                    <Tooltip title={`Sesuai`}>
-                      <Button onClick={() =>
-                        row.reports.length === 0 ?
-                          createReport(row.id, true)
-                          :
-                          message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                      } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
-                    </Tooltip>
-                    <Tooltip title={`Tidak Sesuai`}>
-                      <Button onClick={() =>
-                        row.reports.length === 0 ?
-                          createReport(row.id, false)
-                          :
-                          message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                      } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
-                    </Tooltip>
-                  </>
-                  :
-                  row.reports.length > 1 ?
-                    row.reports.map((report: ReportAttributes) => (
-                      report.check ?
-                        <Tag color="green">Sesuai</Tag>
+    }, 
+    // @ts-ignore
+    ...(
+      user === null ?
+        []
+        :
+        [{
+          title: user?.type === 'chief' ? 'Laporan' : 'Laporan | Edit | Hapus',
+          key: 'action',
+          render: (row: ScheduleAttributes, record: ScheduleAttributes, idx: number) => (
+            <Space split={<Divider type="vertical" />}>
+              {['lecturer', 'chief'].includes(user?.type) &&
+                <>
+                  {
+                    (row.reports.length === 0 && user?.type === 'lecturer') ?
+                      <>
+                        <Tooltip title={`Sesuai`}>
+                          <Button onClick={() =>
+                            row.reports.length === 0 ?
+                              createReport(row.id, true)
+                              :
+                              message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                          } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
+                        </Tooltip>
+                        <Tooltip title={`Tidak Sesuai`}>
+                          <Button onClick={() =>
+                            row.reports.length === 0 ?
+                              createReport(row.id, false)
+                              :
+                              message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                          } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
+                        </Tooltip>
+                      </>
+                      :
+                      row.reports.length > 1 ?
+                        row.reports.map((report: ReportAttributes) => (
+                          report.check ?
+                            <Tag color="green">Sesuai</Tag>
+                            :
+                            <Tag color="error">Tidak Sesuai</Tag>
+                        ))
                         :
-                        <Tag color="error">Tidak Sesuai</Tag>
-                    ))
-                    :
-                    <Tag color="blue">Belum dilapor</Tag>
+                        <Tag color="blue">Belum dilapor</Tag>
+                  }
+                </>
               }
-            </>
-          }
-          {['administrator', 'lecturer'].includes(user.type) &&
-            <>
-              <Tooltip title={'Edit'}>
-                <Button
-                  onClick={() => {
-                    setSchedule(row);
-                    toggleModal(true);
-                  }}
-                  icon={<EditOutlined />} size="small" />
-              </Tooltip>
-              <Tooltip title="Hapus jadwal">
-                <Popconfirm
-                  title="Apakah Anda ingin menghapus jadwal ini?"
-                  placement="topRight"
-                  okText="Hapus"
-                  cancelText="Batal"
-                  okButtonProps={{ type: 'primary', danger: true }}
-                  onConfirm={() => deleteSchedule(row)}
-                >
-                  <Button icon={<DeleteOutlined />} danger type="primary" size="small" />
-                </Popconfirm>
-              </Tooltip>
-            </>}
-        </Space>
-      ),
-      width: 250,
-      fixed: 'right'
-    }
+              {['administrator', 'lecturer'].includes(user?.type) &&
+                <>
+                  <Tooltip title={'Edit'}>
+                    <Button
+                      onClick={() => {
+                        setSchedule(row);
+                        toggleModal(true);
+                      }}
+                      icon={<EditOutlined />} size="small" />
+                  </Tooltip>
+                  <Tooltip title="Hapus jadwal">
+                    <Popconfirm
+                      title="Apakah Anda ingin menghapus jadwal ini?"
+                      placement="topRight"
+                      okText="Hapus"
+                      cancelText="Batal"
+                      okButtonProps={{ type: 'primary', danger: true }}
+                      onConfirm={() => deleteSchedule(row)}
+                    >
+                      <Button icon={<DeleteOutlined />} danger type="primary" size="small" />
+                    </Popconfirm>
+                  </Tooltip>
+                </>}
+            </Space>
+          ),
+          width: 250,
+          fixed: 'right'
+        }])
   ]), [getMultipleWeekCount, deleteSchedule, user, createReport, getSumToCurrentIndex]);
 
   return (
     <div>
-      {['administrator', 'lecturer'].includes(user.type) &&
+      {['administrator', 'lecturer'].includes(user?.type) &&
         <AddPlan schedule={schedule}
           onSubmit={typeof schedule !== 'undefined' ? updateSchedule : createSchedule}
           onCancel={() => {

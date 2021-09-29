@@ -15,7 +15,7 @@ const Layout: FC = (): ReactElement => {
       <Header />
       <Button onClick={() => push('/login')} icon={<LoginOutlined />} type="primary" size="large" block>Login</Button>
       <Divider>atau</Divider>
-      <Button onClick={() => push('/kuesioner')} icon={<FormOutlined />} size="large" block>Jawab Kuesioner</Button>
+      <Button onClick={() => push('/jadwal')} icon={<FormOutlined />} size="large" block>Lihat RPS</Button>
     </HomeContainer>
   )
 }

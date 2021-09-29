@@ -88,6 +88,15 @@ export interface ReportAttributes extends ModelInstance {
 	updated_at?: Date;
 }
 
+export interface CommentAttributes extends ModelInstance {
+  name: string;
+  nim: string;
+  content: string;
+  subject_id?: number;
+	created_at?: Date;
+	updated_at?: Date;
+}
+
 export interface ModelCollectionResult<T extends ModelInstance> extends ICollectionResult {
   rows: T[],
   count: number;

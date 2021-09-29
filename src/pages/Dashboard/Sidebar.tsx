@@ -15,16 +15,16 @@ const Sidebar: FC<SidebarProps> = (props): ReactElement => {
   return (
     <Menu {...props} style={{ marginTop: 10, height: 'calc(100% - 106px)' }} mode="inline">
       <Menu.Item key={`${path}`} icon={<DashboardOutlined />}>Menu Utama</Menu.Item>
-      {['lecturer', 'chief'].includes(`${user.type}`) &&
+      {['lecturer', 'chief'].includes(`${user?.type}`) &&
         <Menu.Item key={`${path}/jadwal`} icon={<ScheduleOutlined />}>Jadwal</Menu.Item>
       }
-      {user.type === 'administrator' &&
+      {user?.type === 'administrator' &&
         <Menu.ItemGroup title="Data Master" >
           {/* <Menu.Item key={`${path}/jadwal`} icon={<ScheduleOutlined />}>Jadwal</Menu.Item> */}
           <Menu.Item key={`${path}/semester`} icon={<BuildOutlined />}>Semester</Menu.Item>
           {false && <Menu.Item key={`${path}/kuesioner`} icon={<FormOutlined />}>Kuesioner</Menu.Item>}
         </Menu.ItemGroup>}
-      {user.type === 'administrator' &&
+      {user?.type === 'administrator' &&
         <Menu.ItemGroup title="Pengguna">
           <Menu.Item key={`${path}/pengguna`} icon={<UserOutlined />} >Pengguna</Menu.Item>
         </Menu.ItemGroup>

@@ -7,7 +7,7 @@ const Layout: FC = (): ReactElement => {
   const { user } = useAuth();
   return (
     <Container>
-      <Typography.Title level={4}>Selamat Datang, {user.name}!</Typography.Title>
+      <Typography.Title level={4}>Selamat Datang, {user?.name}!</Typography.Title>
     </Container>
   )
 }

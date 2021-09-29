@@ -22,15 +22,15 @@ const ContentRoutes: FC = (): ReactElement => {
       </Container>
     }>
       <Switch>
-        {user.type === 'administrator' ?
+        {user?.type === 'administrator' ?
           <Route path={`${path}`} exact component={AdminMainPage} />
           :
           <Route path={`${path}`} exact component={UserMainPage} />
         }
-        {['lecturer', 'chief'].includes(`${user.type}`) &&
+        {['lecturer', 'chief'].includes(`${user?.type}`) &&
           <Route path={`${path}/jadwal`} component={Semesters} />
         }
-        {user.type === 'administrator' &&
+        {user?.type === 'administrator' &&
           <>
             <Route path={`${path}/semester`} component={Semesters} />
             <Route path={`${path}/jadwal`} component={Schedules} />

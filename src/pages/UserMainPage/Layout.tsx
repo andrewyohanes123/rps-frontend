@@ -15,7 +15,7 @@ const Layout: FC = (): ReactElement => {
               {
                 model: 'Schedule',
                 where: {
-                  user_id: user.id
+                  user_id: user?.id
                 }
               }
             ]

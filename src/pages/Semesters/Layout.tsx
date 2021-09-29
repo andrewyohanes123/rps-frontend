@@ -1,7 +1,7 @@
 import { FC, ReactElement, useState, useCallback, useEffect, useMemo } from "react"
-import { Table, Button, Space, Tooltip, Divider, DatePicker } from 'antd'
+import { Table, Button, Space, Tooltip, Divider, DatePicker, PageHeader } from 'antd'
 import moment from "moment";
-import { Link, useRouteMatch } from 'react-router-dom'
+import { Link, useHistory, useRouteMatch } from 'react-router-dom'
 import useModels from "hooks/useModels";
 import { Container } from "components/Container"
 import AddSemester, { semesterValue } from "./AddSemester";
@@ -23,6 +23,7 @@ const Layout: FC = (): ReactElement => {
   const { errorCatch } = useErrorCatcher();
   const { user } = useAuth();
   const { path } = useRouteMatch();
+  const {push} = useHistory();
 
   document.title = "Dashboard - Semester";
 
@@ -40,7 +41,7 @@ const Layout: FC = (): ReactElement => {
         dataIndex: 'year',
         render: (val: string) => `${moment(val).format('YYYY')}/${moment(val).add(1, 'year').format('YYYY')}`
       },
-      ...(user.type === 'administrator' ? [{
+      ...(user?.type === 'administrator' ? [{
         title: 'Edit | Hapus',
         render: (row: SemesterAttributes) => (
           <Space split={<Divider type="vertical" />} size={2}>
@@ -95,8 +96,12 @@ const Layout: FC = (): ReactElement => {
 
   return (
     <Container>
+      {
+        user === null &&
+        <PageHeader title={'Semester'} onBack={() => push('/')} />
+      }
       <Space split={<Divider type="vertical" />}>
-        {user.type === 'administrator' && <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
+        {user?.type === 'administrator' && <AddSemester onSubmit={createSemester} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />}
         <DatePicker.YearPicker allowClear={false} value={currentYear} onChange={(val) => setCurrentYear(val as moment.Moment)} placeholder="Pilih periode tahun semester" />
       </Space>
       <Table
