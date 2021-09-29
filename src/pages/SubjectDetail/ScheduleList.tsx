@@ -50,7 +50,7 @@ const ScheduleList: FC = (): ReactElement => {
             }
           ]
         }),
-        order: [['created_at', 'asc']]
+      order: [['created_at', 'asc']]
     }).then(resp => {
       toggleLoading(false);
       setSchedules(resp.rows as ScheduleAttributes[]);
@@ -267,37 +267,44 @@ const ScheduleList: FC = (): ReactElement => {
         )
       },],
     }, {
-      title: 'Laporan | Edit | Hapus',
+      title: user.type === 'chief' ? 'Laporan' : 'Laporan | Edit | Hapus',
       key: 'action',
       render: (row: ScheduleAttributes, record, idx: number) => (
         <Space split={<Divider type="vertical" />}>
-          {user.type === 'lecturer' &&
-            row.reports.length === 0 ?
+          {['lecturer', 'chief'].includes(user.type) &&
             <>
-              <Tooltip title={`Sesuai`}>
-                <Button onClick={() =>
-                  row.reports.length === 0 ?
-                    createReport(row.id, true)
+              {
+                (row.reports.length === 0 && user.type === 'lecturer') ?
+                  <>
+                    <Tooltip title={`Sesuai`}>
+                      <Button onClick={() =>
+                        row.reports.length === 0 ?
+                          createReport(row.id, true)
+                          :
+                          message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                      } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
+                    </Tooltip>
+                    <Tooltip title={`Tidak Sesuai`}>
+                      <Button onClick={() =>
+                        row.reports.length === 0 ?
+                          createReport(row.id, false)
+                          :
+                          message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
+                      } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
+                    </Tooltip>
+                  </>
+                  :
+                  row.reports.length > 1 ?
+                    row.reports.map((report: ReportAttributes) => (
+                      report.check ?
+                        <Tag color="green">Sesuai</Tag>
+                        :
+                        <Tag color="error">Tidak Sesuai</Tag>
+                    ))
                     :
-                    message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
-              </Tooltip>
-              <Tooltip title={`Tidak Sesuai`}>
-                <Button onClick={() =>
-                  row.reports.length === 0 ?
-                    createReport(row.id, false)
-                    :
-                    message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
-              </Tooltip>
+                    <Tag color="blue">Belum dilapor</Tag>
+              }
             </>
-            :
-            row.reports.map((report: ReportAttributes) => (
-              report.check ?
-                <Tag color="green">Sesuai</Tag>
-                :
-                <Tag color="error">Tidak Sesuai</Tag>
-            ))
           }
           {['administrator', 'lecturer'].includes(user.type) &&
             <>
