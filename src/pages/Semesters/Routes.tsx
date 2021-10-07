@@ -21,16 +21,13 @@ const Routes: FC = (): ReactElement => {
     }>
       <Switch>
         <Route path={`${path}`} component={Semesters} exact />
+        {user !== null && <Route path={`${path}/:id/mata-kuliah/:subject_id`} exact component={SubjectDetail} />}
         {
-          (['lecturer', 'chief'].includes(user?.type) && user !== null) ?
+          (['lecturer', 'chief', 'chairman'].includes(user?.type) && user !== null) ?
             <Route path={`${path}/:id`} component={Subjects} />
             :
-            user !== null ?
-              <Route path={`${path}/:id`} component={ClassRooms} />
-              :
-              <Route path={`${path}/:id`} component={Subjects} />
+            <Route path={`${path}/:id`} component={ClassRooms} />
         }
-        {user !== null && <Route path={`${path}/:id/mata-kuliah/:subject_id`} exact component={SubjectDetail} />}
       </Switch>
     </Suspense>
   )

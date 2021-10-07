@@ -2,13 +2,15 @@ import { FC, ReactElement, useMemo, useEffect, useState, useCallback } from "rea
 import { Button, Divider, message, Popconfirm, Space, Table, Tag, Tooltip } from 'antd'
 import { parse } from 'query-string'
 import { ColumnType } from "antd/lib/table";
-import { ReportAttributes, ScheduleAttributes } from "types";
+import { ScheduleAttributes } from "types";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { useParams, useLocation } from "react-router-dom";
-import { DeleteOutlined, EditOutlined, CheckOutlined, LoadingOutlined, CloseOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, CheckOutlined, LoadingOutlined, CloseOutlined, PrinterOutlined, FormOutlined } from "@ant-design/icons";
 import AddPlan, { scheduleType } from "./AddPlan";
 import useAuth from "hooks/useAuth";
+import ReportNote from "./ReportNote";
+import ReportNoteModal from "./ReportNoteModal";
 
 interface scheduleColumns extends ColumnType<ScheduleAttributes> {
   group?: ColumnType<ScheduleAttributes>[];
@@ -21,6 +23,9 @@ const ScheduleList: FC = (): ReactElement => {
   const [schedule, setSchedule] = useState<ScheduleAttributes | undefined>(undefined);
   const [loading, toggleLoading] = useState<boolean>(true);
   const [modal, toggleModal] = useState<boolean>(false);
+  const [reportNoteModal, toggleReportNoteModal] = useState<boolean>(false);
+  const [reportModal, toggleReportModal] = useState<boolean>(false);
+  const [note, setNote] = useState<string>('');
   const { user } = useAuth();
   const { search } = useLocation();
   const { models: { Schedule, Report } } = useModels();
@@ -36,18 +41,35 @@ const ScheduleList: FC = (): ReactElement => {
         subject_id
       },
       ...(
-        ['lecturer', 'chief'].includes(user?.type) &&
+        ['lecturer', 'chief', 'chairman'].includes(user?.type) &&
         {
           include: [
             {
               model: 'Report',
-              attributes: ['check', 'schedule_id', 'class_room_id', 'user_id'],
+              attributes: ['check', 'schedule_id', 'class_room_id', 'lecturer_id', 'chairman_id', 'chief_id', 'id', 'note'],
               where: {
                 class_room_id: kelas
               },
               // @ts-ignore
-              required: false
-            }
+              required: false,
+              include: [
+                {
+                  model: 'User',
+                  attributes: ['name', 'id'],
+                  as: 'Lecturer'
+                },
+                {
+                  model: 'User',
+                  attributes: ['name', 'id'],
+                  as: 'Chairman'
+                },
+                {
+                  model: 'User',
+                  attributes: ['name', 'id'],
+                  as: 'Chief'
+                },
+              ]
+            },
           ]
         }),
       order: [['created_at', 'asc']]
@@ -62,14 +84,17 @@ const ScheduleList: FC = (): ReactElement => {
   }, [getSchedules]);
 
   const createSchedule = useCallback((val: scheduleType, cb: () => void) => {
-    Schedule.create({ ...val, subject_id }).then(resp => {
+    Schedule.create({
+      ...val, subject_id,
+      lecturer_id: user?.id
+    }).then(resp => {
       console.log(resp);
       message.success('Jadwal berhasil ditambah');
       cb();
       toggleModal(false);
       getSchedules();
     }).catch(errorCatch);
-  }, [Schedule, errorCatch, getSchedules, subject_id]);
+  }, [Schedule, errorCatch, getSchedules, subject_id, user]);
 
   const getSumToCurrentIndex = useCallback((index: number) => {
     if (index > 0) {
@@ -80,7 +105,7 @@ const ScheduleList: FC = (): ReactElement => {
   }, [schedules]);
 
   const getMultipleWeekCount = useCallback((value: number, count: number): string => {
-    return Array(count).fill(0).map((element: number, index) => (element) + (index + (value - 1))).join(', ')
+    return Array(count).fill(0).map((element: number, index) => (element) + (index + ((count === 3 ? value - 1 : value) - 1))).join(', ')
   }, []);
 
   const deleteSchedule = useCallback((schedule: ScheduleAttributes) => {
@@ -105,11 +130,54 @@ const ScheduleList: FC = (): ReactElement => {
   }, [schedule, getSchedules, errorCatch]);
 
   const createReport = useCallback((schedule_id: number, check: boolean) => {
-    Report.create({ check, user_id: user?.id, schedule_id, class_room_id: kelas }).then(resp => {
+    Report.create({
+      check,
+      ...(user?.type === 'lecturer' ? { lecturer_id: user?.id } : { chairman_id: user?.id })
+      , schedule_id, class_room_id: kelas
+    }).then(resp => {
       message.success('Ceklis berhasil');
       getSchedules(false);
+      console.log(resp);
     }).catch(errorCatch);
   }, [getSchedules, user, Report, errorCatch, kelas]);
+
+  const notSuitableButton = useCallback((row: ScheduleAttributes, index: number) => {
+    if (row.report === null) {
+      toggleReportNoteModal(true);
+      setSchedule(row);
+    } else {
+      message.info(`Pertemuan ${getSumToCurrentIndex(index)} sudah di-ceklis`)
+    }
+  }, [getSumToCurrentIndex]);
+
+  const createReportWithNote = useCallback((val: { note: string }, cb: () => void) => {
+    Report.create({
+      check: false,
+      schedule_id: schedule?.id,
+      class_room_id: kelas,
+      note: val.note,
+      ...(user?.type === 'lecturer' ? { lecturer_id: user?.id } : { chairman_id: user?.id })
+    }).then(resp => {
+      message.success('Ceklis berhasil');
+      getSchedules(false);
+      console.log(resp);
+      cb();
+      toggleReportNoteModal(false);
+      setSchedule(undefined);
+    }).catch(errorCatch);
+  }, [kelas, schedule, user, Report, errorCatch, getSchedules]);
+
+  const approveReport = useCallback((report_id: number) => {
+    Report.single(report_id).then(report => {
+      report.update({
+        chief_id: user?.id
+      }).then(resp => {
+        getSchedules();
+        message.success('Laporan berhasil di-approve');
+        console.log(resp)
+      }).catch(errorCatch);
+    }).catch(errorCatch);
+  }, [Report, errorCatch, user, getSchedules])
 
   const columns: scheduleColumns[] = useMemo<scheduleColumns[]>((): scheduleColumns[] => ([
     {
@@ -266,7 +334,7 @@ const ScheduleList: FC = (): ReactElement => {
             )
         )
       },],
-    }, 
+    },
     // @ts-ignore
     ...(
       user === null ?
@@ -276,45 +344,54 @@ const ScheduleList: FC = (): ReactElement => {
           title: user?.type === 'chief' ? 'Laporan' : 'Laporan | Edit | Hapus',
           key: 'action',
           render: (row: ScheduleAttributes, record: ScheduleAttributes, idx: number) => (
-            <Space split={<Divider type="vertical" />}>
-              {['lecturer', 'chief'].includes(user?.type) &&
+            <Space size={2} split={<Divider type="vertical" />}>
+              {['lecturer', 'chief', 'chairman'].includes(user?.type) &&
                 <>
                   {
-                    (row.reports.length === 0 && user?.type === 'lecturer') ?
+                    (row.report === null && user?.type === 'lecturer') ?
                       <>
                         <Tooltip title={`Sesuai`}>
                           <Button onClick={() =>
-                            row.reports.length === 0 ?
+                            row.report === null ?
                               createReport(row.id, true)
                               :
                               message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                          } type={row.reports.length > 0 ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
+                          } type={row.report !== null ? "primary" : 'default'} icon={<CheckOutlined />} size="small" />
                         </Tooltip>
                         <Tooltip title={`Tidak Sesuai`}>
-                          <Button onClick={() =>
-                            row.reports.length === 0 ?
-                              createReport(row.id, false)
-                              :
-                              message.info(`Pertemuan ${getSumToCurrentIndex(idx)} sudah di-ceklis`)
-                          } type={row.reports.length > 0 ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
+                          <Button onClick={() => notSuitableButton(row, idx)} type={row.report !== null ? "primary" : 'default'} danger icon={<CloseOutlined />} size="small" />
                         </Tooltip>
                       </>
                       :
-                      row.reports.length > 1 ?
-                        row.reports.map((report: ReportAttributes) => (
-                          report.check ?
+                      row.report !== null ?
+                        row.report.chief_id === null ?
+                          user?.type === 'lecturer' ?
+                            <Tag color="blue">Belum di-Approve Kaprodi</Tag>
+                            :
+                            <Tooltip title={`Approve Laporan`}>
+                              <Button onClick={() => approveReport(row.report.id)} icon={<CheckOutlined />} size="small" />
+                            </Tooltip>
+                          :
+                          row.report.check ?
                             <Tag color="green">Sesuai</Tag>
                             :
-                            <Tag color="error">Tidak Sesuai</Tag>
-                        ))
+                            <>
+                              <Tag color="error">Tidak Sesuai</Tag>
+                              <Tooltip title={`Catatan Laporan`}>
+                                <Button onClick={() => {
+                                  toggleReportModal(true);
+                                  setNote(row.report.note);
+                                }} icon={<FormOutlined />} size="small" />
+                              </Tooltip>
+                            </>
                         :
                         <Tag color="blue">Belum dilapor</Tag>
                   }
                 </>
               }
-              {['administrator', 'lecturer'].includes(user?.type) &&
+              {['administrator', 'lecturer', 'chairman'].includes(user?.type) &&
                 <>
-                  <Tooltip title={'Edit'}>
+                  {!['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ? <Tooltip title={'Edit Pertemuan'}>
                     <Button
                       onClick={() => {
                         setSchedule(row);
@@ -322,6 +399,9 @@ const ScheduleList: FC = (): ReactElement => {
                       }}
                       icon={<EditOutlined />} size="small" />
                   </Tooltip>
+                    :
+                    <Button disabled icon={<EditOutlined />} size="small" />
+                  }
                   <Tooltip title="Hapus jadwal">
                     <Popconfirm
                       title="Apakah Anda ingin menghapus jadwal ini?"
@@ -337,23 +417,29 @@ const ScheduleList: FC = (): ReactElement => {
                 </>}
             </Space>
           ),
-          width: 250,
+          width: user?.type === 'chief' ? 150 : 300,
           fixed: 'right'
         }])
-  ]), [getMultipleWeekCount, deleteSchedule, user, createReport, getSumToCurrentIndex]);
+  ]), [getMultipleWeekCount, deleteSchedule, user, createReport, getSumToCurrentIndex, notSuitableButton, approveReport]);
 
   return (
     <div>
-      {['administrator', 'lecturer'].includes(user?.type) &&
-        <AddPlan schedule={schedule}
-          onSubmit={typeof schedule !== 'undefined' ? updateSchedule : createSchedule}
-          onCancel={() => {
-            toggleModal(false);
-            setSchedule(undefined);
-          }}
-          onOpen={() => toggleModal(true)}
-          visible={modal}
-        />}
+      <Space align="baseline">
+        {['administrator', 'lecturer'].includes(user?.type) &&
+          <AddPlan schedule={schedule}
+            onSubmit={typeof schedule !== 'undefined' ? updateSchedule : createSchedule}
+            onCancel={() => {
+              toggleModal(false);
+              setSchedule(undefined);
+            }}
+            onOpen={() => toggleModal(true)}
+            visible={modal}
+          />}
+        {
+          (schedules.length === schedules.filter(schedule => schedule.report !== null).length) &&
+          <Button style={{ marginTop: 8 }} type="primary" icon={<PrinterOutlined />}>Print Laporan</Button>
+        }
+      </Space>
       <Table
         dataSource={schedules}
         loading={{ spinning: loading, size: 'large', tip: 'Mengambil data jadwal', indicator: <LoadingOutlined spin /> }}
@@ -375,6 +461,8 @@ const ScheduleList: FC = (): ReactElement => {
             <Column key={`${column.title}`} {...column} />
         ))}
       </Table>
+      <ReportNote onCancel={() => toggleReportNoteModal(false)} visible={reportNoteModal} onSubmit={createReportWithNote} />
+      <ReportNoteModal visible={reportModal} onCancel={() => toggleReportModal(false)} note={note} afterClose={() => setNote('')} />
     </div>
   )
 }

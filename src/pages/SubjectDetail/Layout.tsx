@@ -62,13 +62,13 @@ const Layout: FC = (): ReactElement => {
         user === null ?
           push(`/jadwal/${id}`)
           :
-          ['chief', 'lecturer'].includes(user?.type) ?
+          ['chief', 'lecturer', 'chairman'].includes(user?.type) ?
             push(`/dashboard/jadwal/${id}`)
             :
             push(`/dashboard/semester/${id}/mata-kuliah`)
       } />
       <Container padding={18}>
-        {['chief', 'lecturer'].includes(user?.type) &&
+        {['chief', 'lecturer', 'chairman'].includes(user?.type) &&
           <Space style={{ marginBottom: 12 }} split={<Divider type="vertical" />}>
             <Select
               // @ts-ignore
@@ -89,13 +89,13 @@ const Layout: FC = (): ReactElement => {
           <ScheduleStatistic />
         }
         {
-          !['chief', 'lecturer'].includes(user?.type) ?
+          !['chief', 'lecturer', 'chairman'].includes(user?.type) ?
             <>
               <SubjectDescription semester={semester} subject={subject} />
               <ScheduleList />
             </>
             :
-            (['chief', 'lecturer'].includes(user?.type) && typeof parsedQuery.kelas !== 'undefined') ?
+            (['chief', 'lecturer', 'chairman'].includes(user?.type) && typeof parsedQuery.kelas !== 'undefined') ?
               <>
                 <SubjectDescription semester={semester} subject={subject} />
                 <ScheduleList />

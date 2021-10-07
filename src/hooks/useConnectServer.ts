@@ -1,6 +1,6 @@
 import Adapter, { IModelFactory } from '@edgarjeremy/sirius.adapter';
 import AuthProvider from '@edgarjeremy/sirius.adapter/dist/libs/AuthProvider';
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import useAuth from './useAuth';
 import useModels from './useModels';
 
@@ -50,9 +50,9 @@ export const useConnectServer = (Connect: Adapter) => {
       const auth: AuthProvider = Connect.getAuthProvider();
       setAuth(auth);
     }
-    
+
     // eslint-disable-next-line
   }, [localModels, Connect]);
 
-  return { error, ready };
+  return useMemo(() => ({ error, ready }), [error, ready]);
 }

@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, message, Space, Table, Tooltip } from "antd";
+import { Button, message, Popconfirm, Space, Table, Tooltip } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { Container } from "components/Container"
 import useErrorCatcher from "hooks/useErrorCatcher";
@@ -38,6 +38,13 @@ const Layout: FC = (): ReactElement => {
     }).catch(errorCatch);
   }, [getUsers, User, errorCatch]);
 
+  const deleteUser = useCallback((user: UserAttributes) => {
+    user.delete().then(resp => {
+      message.success`Pengguna ${resp.name} berhasil dihapus`;
+      getUsers();
+    }).catch(errorCatch);
+  }, [getUsers, errorCatch]);
+
   const columns: ColumnsType<UserAttributes> = useMemo<ColumnsType<UserAttributes>>(() => ([
     {
       title: 'Nama',
@@ -53,7 +60,7 @@ const Layout: FC = (): ReactElement => {
       title: 'Jenis Pengguna',
       key: 'type',
       dataIndex: 'type',
-      render: (type: 'lecturer' | 'chief' | 'administrator') => type === 'chief' ? 'Kepala Program Studi' : type === 'administrator' ? 'Administrator' : 'Dosen'
+      render: (type: 'lecturer' | 'chief' | 'administrator' | 'chairman') => type === 'chief' ? 'Kepala Program Studi' : type === 'administrator' ? 'Administrator' : type === 'chairman' ? 'Ketua Kelas' : 'Dosen'
     },
     {
       title: 'Edit | Hapus',
@@ -63,11 +70,21 @@ const Layout: FC = (): ReactElement => {
           <Button icon={<EditOutlined />} size="small" />
         </Tooltip>
         <Tooltip title={`Hapus ${row.name}?`}>
-          <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+          <Popconfirm
+            title={`Apakah Anda ingin menghapus ${row.name}?`}
+            okText="Hapus"
+            okType="primary"
+            okButtonProps={{ danger: true }}
+            cancelText="Batal"
+            onConfirm={() => deleteUser(row)}
+            placement="topRight"
+          >
+            <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+          </Popconfirm>
         </Tooltip>
       </Space>)
     }
-  ]), []);
+  ]), [deleteUser]);
 
   return (
     <Container>

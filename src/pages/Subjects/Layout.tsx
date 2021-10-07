@@ -127,7 +127,7 @@ const Layout: FC = (): ReactElement => {
         <Space split={<Divider type="vertical" />} size={2}>
           <Tooltip title={`RPS ${row.name}`}>
             <Button onClick={() =>
-              (['lecturer', 'chief'].includes(user?.type) || user === null) ?
+              (['lecturer', 'chief', 'chairman'].includes(user?.type) || user === null) ?
                 push(`${pathname}/mata-kuliah/${row.id}`)
                 :
                 push(`${pathname}/${row.id}`)
@@ -173,7 +173,7 @@ const Layout: FC = (): ReactElement => {
           onOpen={() => toggleModal(true)}
           onSubmit={typeof subject !== 'undefined' ? updateSubject : createSubject}
         />}
-      {(['lecturer', 'chief'].includes(user?.type) || user === null) &&
+      {(['lecturer', 'chief', 'chairman'].includes(user?.type) || user === null) &&
         <PageHeader title="Mata Kuliah" onBack={() => push(user === null ? '/jadwal' : '/dashboard/jadwal')} />
       }
       <Table

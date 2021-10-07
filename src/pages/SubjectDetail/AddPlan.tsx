@@ -62,7 +62,7 @@ const AddPlan: FC<props> = ({ visible, onCancel, onOpen, onSubmit, schedule }): 
           <Row gutter={[16, 16]}>
             <Col md={12}>
               <Item name="week_count" label="Jumlah minggu" rules={[{ required: true, message: 'Masukkan jumlah minggu' }]}>
-                <InputNumber disabled={loading} placeholder="Jumlah minggu" min={1} defaultValue={1} />
+                <InputNumber disabled={loading} placeholder="Jumlah minggu" min={1} max={3} defaultValue={1} />
               </Item>
               <Item name="value" label="Bobot" rules={[{ required: true, message: 'Masukkan bobot' }]}>
                 <InputNumber disabled={loading} placeholder="Bobot" min={1} defaultValue={1} />

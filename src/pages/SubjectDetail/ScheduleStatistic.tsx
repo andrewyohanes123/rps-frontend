@@ -9,7 +9,7 @@ const ScheduleStatistic: FC = (): ReactElement => {
   const [checkedSchedule, setCheckedSchedule] = useState<number>(0);
   const [totalSchedule, setTotalSchedule] = useState<number>(0);
   const [uncheckedSchedule, setUncheckedSchedule] = useState<number>(0);
-  const { id } = useParams<{ id: string }>();
+  const { id, subject_id } = useParams<{ id: string, subject_id: string }>();
   const { search } = useLocation();
   const { models: { Schedule, Report } } = useModels();
   const { kelas } = useMemo(() => parse(search), [search]);
@@ -31,29 +31,43 @@ const ScheduleStatistic: FC = (): ReactElement => {
     Report.collection({
       attributes: ['schedule_id', 'class_room_id', 'check'],
       where: {
-        schedule_id: id,
         class_room_id: kelas,
-        check: true
-      }
+        check: true,
+      },
+      include: [{
+        model: 'Schedule',
+        attributes: ['subject_id', 'week_count'],
+        where: {
+          subject_id
+        }
+      }]
     }).then(resp => {
       const checkedReports: number = resp.rows.length;
-      setCheckedSchedule(checkedReports);
+      const checked: number = checkedReports <= 1 ? checkedReports : resp.rows.map(row => row.schedule.week_count).reduce((a: number, b: number) => (a + b));
+      setCheckedSchedule(checked);
     }).catch(errorCatch);
-  }, [Report, id, kelas, errorCatch]);
+  }, [Report, subject_id, kelas, errorCatch]);
 
   const getUncheckedSchedule = useCallback(() => {
     Report.collection({
       attributes: ['schedule_id', 'class_room_id', 'check'],
       where: {
-        schedule_id: id,
         class_room_id: kelas,
         check: false
-      }
+      },
+      include: [{
+        model: 'Schedule',
+        attributes: ['subject_id', 'week_count'],
+        where: {
+          subject_id
+        }
+      }]
     }).then(resp => {
       const uncheckedReports: number = resp.rows.length;
-      setUncheckedSchedule(uncheckedReports);
+      const unchecked: number = uncheckedReports <= 1 ? uncheckedReports : resp.rows.map(row => row.schedule.week_count).reduce((a: number, b: number) => (a + b));
+      setUncheckedSchedule(unchecked);
     }).catch(errorCatch);
-  }, [Report, id, kelas, errorCatch]);
+  }, [Report, subject_id, kelas, errorCatch]);
 
   useEffect(() => {
     getSchedules();
