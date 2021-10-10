@@ -170,14 +170,28 @@ const ScheduleList: FC = (): ReactElement => {
   const approveReport = useCallback((report_id: number) => {
     Report.single(report_id).then(report => {
       report.update({
-        chief_id: user?.id
+        ...(user?.type === 'chairman' ?
+          {
+            chairman_id: user?.id
+          }
+          :
+          {
+            chief_id: user?.id
+          })
       }).then(resp => {
         getSchedules();
         message.success('Laporan berhasil di-approve');
         console.log(resp)
       }).catch(errorCatch);
     }).catch(errorCatch);
-  }, [Report, errorCatch, user, getSchedules])
+  }, [Report, errorCatch, user, getSchedules]);
+
+  useEffect(() => {
+    const mainLayout: Element | null = document.querySelector('main.ant-layout-content');
+    if (mainLayout !== null) {
+      mainLayout.setAttribute('style', modal ? "background: white; overflow: hidden; position: relative;" : 'background: white; overflow: auto; position: relative;')
+    }
+  }, [modal])
 
   const columns: scheduleColumns[] = useMemo<scheduleColumns[]>((): scheduleColumns[] => ([
     {
@@ -365,10 +379,10 @@ const ScheduleList: FC = (): ReactElement => {
                       :
                       row.report !== null ?
                         row.report.chief_id === null ?
-                          user?.type === 'lecturer' ?
+                          ['lecturer', 'chairman'].includes(user?.type) ?
                             <Tag color="blue">Belum di-Approve Kaprodi</Tag>
                             :
-                            <Tooltip title={`Approve Laporan`}>
+                            <Tooltip title={user?.type === 'chairman' ? `Tandai Laporan` : `Approve Laporan`}>
                               <Button onClick={() => approveReport(row.report.id)} icon={<CheckOutlined />} size="small" />
                             </Tooltip>
                           :
@@ -389,7 +403,7 @@ const ScheduleList: FC = (): ReactElement => {
                   }
                 </>
               }
-              {['administrator', 'lecturer', 'chairman'].includes(user?.type) &&
+              {['administrator', 'lecturer'].includes(user?.type) &&
                 <>
                   {!['8', '16'].includes(getSumToCurrentIndex(idx).toString()) ? <Tooltip title={'Edit Pertemuan'}>
                     <Button

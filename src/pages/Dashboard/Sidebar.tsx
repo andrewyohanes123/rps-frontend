@@ -15,7 +15,7 @@ const Sidebar: FC<SidebarProps> = (props): ReactElement => {
   return (
     <Menu {...props} style={{ marginTop: 10, height: 'calc(100% - 106px)' }} mode="inline">
       <Menu.Item key={`${path}`} icon={<DashboardOutlined />}>Menu Utama</Menu.Item>
-      {['lecturer', 'chief'].includes(`${user?.type}`) &&
+      {['lecturer', 'chief', 'chairman'].includes(`${user?.type}`) &&
         <Menu.Item key={`${path}/jadwal`} icon={<ScheduleOutlined />}>Jadwal</Menu.Item>
       }
       {user?.type === 'administrator' &&
