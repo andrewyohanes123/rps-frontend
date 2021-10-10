@@ -11,6 +11,7 @@ import AddPlan, { scheduleType } from "./AddPlan";
 import useAuth from "hooks/useAuth";
 import ReportNote from "./ReportNote";
 import ReportNoteModal from "./ReportNoteModal";
+import ReportPDF from "components/ReportPDF";
 
 interface scheduleColumns extends ColumnType<ScheduleAttributes> {
   group?: ColumnType<ScheduleAttributes>[];
@@ -25,6 +26,7 @@ const ScheduleList: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
   const [reportNoteModal, toggleReportNoteModal] = useState<boolean>(false);
   const [reportModal, toggleReportModal] = useState<boolean>(false);
+  const [pdfModal, togglePdfModal] = useState<boolean>(false);
   const [note, setNote] = useState<string>('');
   const { user } = useAuth();
   const { search } = useLocation();
@@ -451,7 +453,7 @@ const ScheduleList: FC = (): ReactElement => {
           />}
         {
           (schedules.length === schedules.filter(schedule => schedule.report !== null).length) &&
-          <Button style={{ marginTop: 8 }} type="primary" icon={<PrinterOutlined />}>Print Laporan</Button>
+          <Button style={{ marginTop: 8 }} onClick={() => togglePdfModal(true)} type="primary" icon={<PrinterOutlined />}>Print Laporan</Button>
         }
       </Space>
       <Table
@@ -477,6 +479,7 @@ const ScheduleList: FC = (): ReactElement => {
       </Table>
       <ReportNote onCancel={() => toggleReportNoteModal(false)} visible={reportNoteModal} onSubmit={createReportWithNote} />
       <ReportNoteModal visible={reportModal} onCancel={() => toggleReportModal(false)} note={note} afterClose={() => setNote('')} />
+      <ReportPDF visible={pdfModal} onCancel={() => togglePdfModal(false)} onOpen={() => console.log('open')} />
     </div>
   )
 }
