@@ -11,9 +11,9 @@ import './App.css';
 import './styles/app.css'
 import FourOFour from 'pages/404';
 import Dashboard from 'pages/Dashboard';
-import Home from 'pages/Home';
+// import Home from 'pages/Home';
 import QuestionerStudent from 'pages/QuestionerStudent';
-import Semesters from 'pages/Semesters/Routes';
+// import Semesters from 'pages/Semesters/Routes';
 import { LoadingOutlined } from '@ant-design/icons';
 
 const { REACT_APP_IP_ADDRESS, REACT_APP_PORT }: NodeJS.ProcessEnv = process.env;
@@ -33,9 +33,9 @@ const App: FC = (): ReactElement => {
       ready ?
         <ConfigProvider locale={locale} >
           <Switch>
-            <Route path="/" exact component={Home} />
-            <Route path="/jadwal" component={Semesters} />
-            <Route path="/login" exact component={Login} />
+            {/* <Route path="/" exact component={Home} /> */}
+            <Route path="/" exact component={Login} />
+            {/* <Route path="/jadwal" component={Semesters} /> */}
             <Route path="/kuesioner" exact component={QuestionerStudent} />
             <Route path="/dashboard" component={Dashboard} />
             <Route path="*" component={FourOFour} />

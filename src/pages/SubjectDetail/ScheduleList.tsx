@@ -2,7 +2,7 @@ import { FC, ReactElement, useMemo, useEffect, useState, useCallback } from "rea
 import { Button, Divider, message, Popconfirm, Space, Table, Tag, Tooltip } from 'antd'
 import { parse } from 'query-string'
 import { ColumnType } from "antd/lib/table";
-import { ScheduleAttributes } from "types";
+import { ScheduleAttributes, SubjectAttributes } from "types";
 import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 import { useParams, useLocation } from "react-router-dom";
@@ -17,9 +17,13 @@ interface scheduleColumns extends ColumnType<ScheduleAttributes> {
   group?: ColumnType<ScheduleAttributes>[];
 }
 
+interface props {
+  subject: SubjectAttributes;
+}
+
 const { Column, ColumnGroup } = Table;
 
-const ScheduleList: FC = (): ReactElement => {
+const ScheduleList: FC<props> = ({ subject }): ReactElement => {
   const [schedules, setSchedules] = useState<ScheduleAttributes[]>([]);
   const [schedule, setSchedule] = useState<ScheduleAttributes | undefined>(undefined);
   const [loading, toggleLoading] = useState<boolean>(true);
@@ -479,7 +483,7 @@ const ScheduleList: FC = (): ReactElement => {
       </Table>
       <ReportNote onCancel={() => toggleReportNoteModal(false)} visible={reportNoteModal} onSubmit={createReportWithNote} />
       <ReportNoteModal visible={reportModal} onCancel={() => toggleReportModal(false)} note={note} afterClose={() => setNote('')} />
-      <ReportPDF visible={pdfModal} onCancel={() => togglePdfModal(false)} onOpen={() => console.log('open')} />
+      <ReportPDF subject={subject} visible={pdfModal} onCancel={() => togglePdfModal(false)} onOpen={() => console.log('open')} />
     </div>
   )
 }

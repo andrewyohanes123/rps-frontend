@@ -17,24 +17,24 @@ const Header: FC = (): ReactElement => {
           <Image src={logoQ} style={{ width: 56, height: 48, marginTop: 6 }} />
         </View>
       </View>
-      <View style={[styles.head, {backgroundColor: '#777', fontSize: 12}]}>
-        <View style={styles.subHeadTextContainer}>
-          <Text>FORMULIR</Text>
+      <View style={[styles.head, { backgroundColor: '#777', fontSize: 10, fontWeight: 'bold', padding: 3 }]}>
+        <View style={[styles.subHeadTextContainer, {flex: 2}]}>
+          <Text style={{ textAlign: 'center' }}>FORMULIR</Text>
+        </View>
+        <View style={[styles.subHeadTextContainer, { flex: 2 }]}>
+          <Text style={{ textAlign: 'center' }}>FM-046 ed.A rev.3</Text>
         </View>
         <View style={styles.subHeadTextContainer}>
-          <Text>FM-072 ed.A rev.1</Text>
+          <Text style={{ textAlign: 'center' }}>ISSUE: A</Text>
+        </View>
+        <View style={[styles.subHeadTextContainer, { flex: 2 }]}>
+          <Text style={{ textAlign: 'center' }}>Issued: 31-01-2007</Text>
         </View>
         <View style={styles.subHeadTextContainer}>
-          <Text>ISSUE: A</Text>
+          <Text style={{ textAlign: 'center' }}>UPDATE: 3</Text>
         </View>
-        <View style={styles.subHeadTextContainer}>
-          <Text>Issued: 31-01-2007</Text>
-        </View>
-        <View style={styles.subHeadTextContainer}>
-          <Text>UPDATE: 1</Text>
-        </View>
-        <View style={styles.subHeadTextContainer}>
-          <Text>Updated: 07-01-2017</Text>
+        <View style={[styles.subHeadTextContainer, { flex: 2 }]}>
+          <Text style={{ textAlign: 'center' }}>Updated: 22-01-2018</Text>
         </View>
       </View>
     </View>
@@ -62,17 +62,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   headText: {
+    fontFamily: 'Times',
     textAlign: 'left',
     fontSize: 22,
     textTransform: 'uppercase',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   subHeadTextContainer: {
     display: 'flex',
-    flex: 0,
-    padding: 5,
+    flex: 1,
+    padding: 3,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     color: 'white'
   }
 })

@@ -92,13 +92,13 @@ const Layout: FC = (): ReactElement => {
           !['chief', 'lecturer', 'chairman'].includes(user?.type) ?
             <>
               <SubjectDescription semester={semester} subject={subject} />
-              <ScheduleList />
+              {typeof subject !== 'undefined' && <ScheduleList subject={subject} />}
             </>
             :
             (['chief', 'lecturer', 'chairman'].includes(user?.type) && typeof parsedQuery.kelas !== 'undefined') ?
               <>
                 <SubjectDescription semester={semester} subject={subject} />
-                <ScheduleList />
+                {typeof subject !== 'undefined' && <ScheduleList subject={subject} />}
               </>
               :
               <Result status="info" title="Pilih kelas terlebih dahulu" subTitle="Pilih kelas untuk membuat laporan RPS" />
