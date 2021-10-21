@@ -385,12 +385,15 @@ const ScheduleList: FC<props> = ({ subject }): ReactElement => {
                       :
                       row.report !== null ?
                         row.report.chief_id === null ?
-                          ['lecturer', 'chairman'].includes(user?.type) ?
+                          ['lecturer'].includes(user?.type) ?
                             <Tag color="blue">Belum di-Approve Kaprodi</Tag>
                             :
-                            <Tooltip title={user?.type === 'chairman' ? `Tandai Laporan` : `Approve Laporan`}>
-                              <Button onClick={() => approveReport(row.report.id)} icon={<CheckOutlined />} size="small" />
-                            </Tooltip>
+                            user.type === 'chairman' && row.report.chairman_id !== null ?
+                              <Tag color="green">Telah ditandai ketua kelas</Tag>
+                              :
+                              <Tooltip title={user?.type === 'chairman' ? `Tandai Laporan` : `Approve Laporan`}>
+                                <Button onClick={() => approveReport(row.report.id)} icon={<CheckOutlined />} size="small" />
+                              </Tooltip>
                           :
                           row.report.check ?
                             <Tag color="green">Sesuai</Tag>
