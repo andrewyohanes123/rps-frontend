@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, message, Popconfirm, Space, Table, Tooltip } from "antd";
+import { Button, message, Popconfirm, Space, Table, Tag, Tooltip } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { Container } from "components/Container"
 import useErrorCatcher from "hooks/useErrorCatcher";
@@ -11,6 +11,7 @@ import AddUser, { userForm } from "./AddUser"
 const Layout: FC = (): ReactElement => {
   const [modal, toggleModal] = useState<boolean>(false);
   const [users, setUsers] = useState<ModelCollectionResult<UserAttributes>>({ rows: [], count: 0 });
+  const [user, setUser] = useState<UserAttributes | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const { models: { User } } = useModels();
@@ -20,7 +21,12 @@ const Layout: FC = (): ReactElement => {
 
   const getUsers = useCallback(() => {
     User.collection({
-      attributes: ['username', 'name', 'type'],
+      attributes: ['username', 'name', 'type', 'class_room_id'],
+      include: [{
+        model: 'ClassRoom',
+        attributes: ['name', 'id']
+      }],
+      order: [['id', 'asc']]
     }).then(resp => {
       setUsers(resp as ModelCollectionResult<UserAttributes>);
     }).catch(errorCatch);
@@ -35,6 +41,17 @@ const Layout: FC = (): ReactElement => {
       message.success(`Pengguna ${resp.name} berhasil ditambah`);
       getUsers();
       cb();
+      toggleModal(false);
+    }).catch(errorCatch);
+  }, [getUsers, User, errorCatch]);
+
+  const updateUser = useCallback((val: userForm, cb: () => void) => {
+    User.create({ ...val }).then(resp => {
+      message.success(`Pengguna ${resp.name} berhasil disimpan`);
+      getUsers();
+      cb();
+      toggleModal(false);
+      setUser(undefined);
     }).catch(errorCatch);
   }, [getUsers, User, errorCatch]);
 
@@ -60,14 +77,23 @@ const Layout: FC = (): ReactElement => {
       title: 'Jenis Pengguna',
       key: 'type',
       dataIndex: 'type',
-      render: (type: 'lecturer' | 'chief' | 'administrator' | 'chairman') => type === 'chief' ? 'Kepala Program Studi' : type === 'administrator' ? 'Administrator' : type === 'chairman' ? 'Ketua Kelas' : 'Dosen'
+      render: (type: 'lecturer' | 'chief' | 'administrator' | 'chairman', row: UserAttributes) => (
+        type === 'chief' ? 'Kepala Program Studi' : type === 'administrator' ? 'Administrator' : type === 'chairman' ?
+          <>
+            <span>Ketua Kelas</span> <Tag color="geekblue">{row.class_room?.name}</Tag>
+          </>
+          : 'Dosen'
+      )
     },
     {
       title: 'Edit | Hapus',
       key: 'action',
       render: (row: UserAttributes) => (<Space>
         <Tooltip title={`Edit  ${row.name}?`}>
-          <Button icon={<EditOutlined />} size="small" />
+          <Button onClick={() => {
+            toggleModal(true);
+            setUser(row);
+          }} icon={<EditOutlined />} size="small" />
         </Tooltip>
         <Tooltip title={`Hapus ${row.name}?`}>
           <Popconfirm
@@ -88,7 +114,10 @@ const Layout: FC = (): ReactElement => {
 
   return (
     <Container>
-      <AddUser onSubmit={createUser} visible={modal} onCancel={() => toggleModal(false)} onOpen={() => toggleModal(true)} />
+      <AddUser user={user} onSubmit={typeof user !== 'undefined' ? updateUser : createUser} visible={modal} onCancel={() => {
+        toggleModal(false);
+        setUser(undefined);
+      }} onOpen={() => toggleModal(true)} />
       <Table
         columns={columns}
         style={{ marginTop: 12 }}

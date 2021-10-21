@@ -459,7 +459,7 @@ const ScheduleList: FC<props> = ({ subject }): ReactElement => {
             visible={modal}
           />}
         {
-          (schedules.length === schedules.filter(schedule => schedule.report !== null).length) &&
+          (schedules.length === schedules.filter(schedule => schedule.report !== null).length && !loading) &&
           <Button style={{ marginTop: 8 }} onClick={() => togglePdfModal(true)} type="primary" icon={<PrinterOutlined />}>Print Laporan</Button>
         }
       </Space>

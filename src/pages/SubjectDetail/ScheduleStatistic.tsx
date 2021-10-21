@@ -6,10 +6,10 @@ import useModels from "hooks/useModels";
 import useErrorCatcher from "hooks/useErrorCatcher";
 
 const ScheduleStatistic: FC = (): ReactElement => {
-  const [checkedSchedule, setCheckedSchedule] = useState<number>(0);
-  const [totalSchedule, setTotalSchedule] = useState<number>(0);
-  const [uncheckedSchedule, setUncheckedSchedule] = useState<number>(0);
-  const { id, subject_id } = useParams<{ id: string, subject_id: string }>();
+  const [checkedSchedule, setCheckedSchedule] = useState<number>(2);
+  const [totalSchedule, setTotalSchedule] = useState<number>(2);
+  const [uncheckedSchedule, setUncheckedSchedule] = useState<number>(2);
+  const { subject_id } = useParams<{ id: string, subject_id: string }>();
   const { search } = useLocation();
   const { models: { Schedule, Report } } = useModels();
   const { kelas } = useMemo(() => parse(search), [search]);
@@ -19,13 +19,14 @@ const ScheduleStatistic: FC = (): ReactElement => {
     Schedule.collection({
       attributes: ['id', 'week_count'],
       where: {
-        subject_id: id
+        subject_id
       }
     }).then(resp => {
+      console.log(resp)
       const total: number = resp.rows.map(row => (row.week_count)).reduce((a, b) => (a + b));
       setTotalSchedule(total);
     }).catch(errorCatch);
-  }, [Schedule, id, errorCatch]);
+  }, [Schedule, subject_id, errorCatch]);
 
   const getCheckedSchedule = useCallback(() => {
     Report.collection({

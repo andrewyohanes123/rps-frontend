@@ -2,8 +2,8 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Button, Modal, Form, Input, Select } from "antd"
 import useErrorCatcher from "hooks/useErrorCatcher";
 import useModels from "hooks/useModels";
-import { FC, ReactElement, useCallback, useEffect, useState } from "react"
-import { addDataModal, ClassRoomAttributes } from "types"
+import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react"
+import { addDataModal, ClassRoomAttributes, UserAttributes } from "types"
 
 export type userForm = {
   username: string;
@@ -15,11 +15,12 @@ export type userForm = {
 
 interface props extends addDataModal {
   onSubmit: (val: userForm, cb: () => void) => void;
+  user?: UserAttributes;
 }
 
 const { useForm, Item } = Form;
 
-const AddUser: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactElement => {
+const AddUser: FC<props> = ({ visible, onCancel, onOpen, onSubmit, user }): ReactElement => {
   const [loading, toggleLoading] = useState<boolean>(false);
   const [userType, setUserType] = useState<string>('');
   const [classRooms, setClassRooms] = useState<ClassRoomAttributes[]>([]);
@@ -54,6 +55,16 @@ const AddUser: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEleme
     getClassRooms();
   }, [getClassRooms]);
 
+  useEffect(() => {
+    if (typeof user !== 'undefined') {
+      form.setFieldsValue({
+        ...user
+      });
+    }
+  }, [user, form]);
+
+  const isEdit: boolean = useMemo(() => typeof user !== 'undefined', [user]);
+
   const onValuesChange = useCallback((val: any, changedVal: userForm) => {
     setUserType(changedVal.type ?? '');
   }, []);
@@ -61,7 +72,7 @@ const AddUser: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEleme
   return (
     <>
       <Button onClick={onOpen}>Tambah Pengguna</Button>
-      <Modal visible={visible} onCancel={onCancel} title="Tambah pengguna" footer={null}>
+      <Modal visible={visible} afterClose={resetForm} onCancel={onCancel} title="Tambah pengguna" footer={null}>
         <Form onValuesChange={onValuesChange} form={form} layout="vertical" onFinish={loading ? () => console.log('sabar') : onFinish}>
           <Item name="name" label="Nama" rules={[{ required: true, message: 'Masukkan nama' }]}>
             <Input prefix={loading && <LoadingOutlined spin />} placeholder="Nama" />
@@ -69,7 +80,7 @@ const AddUser: FC<props> = ({ visible, onCancel, onOpen, onSubmit }): ReactEleme
           <Item name="username" label="Username" rules={[{ required: true, message: 'Masukkan username' }]}>
             <Input prefix={loading && <LoadingOutlined spin />} placeholder="Username" />
           </Item>
-          <Item name="password" label="Password" rules={[{ required: true, message: 'Masukkan password' }]}>
+          <Item name="password" label="Password" rules={[{ required: !isEdit, message: 'Masukkan password' }]}>
             <Input.Password prefix={loading && <LoadingOutlined spin />} placeholder="Password" />
           </Item>
           <Item name="type" label="Tipe pengguna" rules={[{ required: true, message: 'Pilih tipe pengguna' }]}>

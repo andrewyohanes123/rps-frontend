@@ -6,7 +6,7 @@ import { Container } from "components/Container"
 import useErrorCatcher from "hooks/useErrorCatcher";
 import useModels from "hooks/useModels";
 import { ColumnsType } from "antd/lib/table";
-import { DeleteOutlined, EditOutlined, ScheduleOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, Loading3QuartersOutlined, ScheduleOutlined } from "@ant-design/icons";
 import AddSubject, { subjectForm } from "./AddSubject";
 import useAuth from "hooks/useAuth";
 
@@ -16,6 +16,7 @@ const Layout: FC = (): ReactElement => {
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const [modal, toggleModal] = useState<boolean>(false);
+  const [loading, toggleLoading] = useState<boolean>(true);
   const { models: { Subject } } = useModels();
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,7 @@ const Layout: FC = (): ReactElement => {
 
   const getSubjects = useCallback(() => {
     const offset = (page - 1) * limit;
+    toggleLoading(true);
     Subject.collection({
       attributes: ['name', 'practice', 'theory', 'code', 'creator_id', 'coordinator_id', 'guide', 'journal', 'software', 'hardware', 'practice_weight', 'theory_weight', 'program_study_achievement', 'subject_achievement', 'subject_cluster'],
       where: {
@@ -60,6 +62,7 @@ const Layout: FC = (): ReactElement => {
       ]
     }).then(resp => {
       setSubjects(resp as ModelCollectionResult<SubjectAttributes>);
+      toggleLoading(false);
     }).catch(errorCatch);
   }, [Subject, id, limit, page, errorCatch, user]);
 
@@ -133,28 +136,28 @@ const Layout: FC = (): ReactElement => {
                 push(`${pathname}/${row.id}`)
             } icon={<ScheduleOutlined />} size="small" />
           </Tooltip>
-          { ['administrator'].includes(user?.type) &&
+          {['administrator'].includes(user?.type) &&
             <>
-          <Tooltip title={`Edit ${row.name}`}>
-            <Button onClick={() => {
-              setSubject(row);
-              toggleModal(true);
-            }} icon={<EditOutlined />} size="small" />
-          </Tooltip>
-          <Tooltip placement="topRight" title={`Hapus ${row.name}?`}>
-            <Popconfirm
-              title={`Apakah Anda yakin ingin menghapus MK ${row.name}?`}
-              okText="Hapus"
-              cancelText="Batal"
-              okType="primary"
-              okButtonProps={{ danger: true }}
-              placement="topRight"
-              onConfirm={() => deleteSubject(row)}
-            >
-              <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
-            </Popconfirm>
-          </Tooltip>
-          </>}
+              <Tooltip title={`Edit ${row.name}`}>
+                <Button onClick={() => {
+                  setSubject(row);
+                  toggleModal(true);
+                }} icon={<EditOutlined />} size="small" />
+              </Tooltip>
+              <Tooltip placement="topRight" title={`Hapus ${row.name}?`}>
+                <Popconfirm
+                  title={`Apakah Anda yakin ingin menghapus MK ${row.name}?`}
+                  okText="Hapus"
+                  cancelText="Batal"
+                  okType="primary"
+                  okButtonProps={{ danger: true }}
+                  placement="topRight"
+                  onConfirm={() => deleteSubject(row)}
+                >
+                  <Button icon={<DeleteOutlined />} size="small" danger type="primary" />
+                </Popconfirm>
+              </Tooltip>
+            </>}
         </Space>
       ),
     }
@@ -177,9 +180,10 @@ const Layout: FC = (): ReactElement => {
         <PageHeader title="Mata Kuliah" onBack={() => push(user === null ? '/jadwal' : '/dashboard/jadwal')} />
       }
       <Table
+        loading={{ spinning: loading, size: 'large', tip: 'Mengambil data mata kuliah', indicator: <Loading3QuartersOutlined spin /> }}
         dataSource={subjects.rows}
         columns={columns}
-        pagination={{ current: page, onChange: setPage, total: subjects.count, pageSize: limit }}
+        pagination={{ current: page, onChange: setPage, total: subjects.count, pageSize: limit, }}
         bordered
         rowKey={item => `${item.id}`}
         style={{ marginTop: 12 }}
